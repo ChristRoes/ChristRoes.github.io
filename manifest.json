@@ -1,2 +1,16 @@
-[InternetShortcut]
-URL=https://lens.usercontent.google.com/banana?agsi=CqwBL2Zvb3RwcmludHMtcHJvZC1zZWFyY2gtbXVsdGltb2RhbC11c2VyLXVwbG9hZHMtZXBoZW1lcmFsLWdhaWEtY2xvbmUvZ2xvYmFsOjowMDAwNTVjZmVjNzAwMjZkOjAwMDAwMTY3OjE6ZDVhYTU4YTM3NTkxY2M1NzowMDAwNTVjZmVjNzAwMjZkOjAwMDAwMzU0MzgwMDMzNjg6MDAwNjVlZDczYmFjZjRhZhACGAEiEGFwcGxpY2F0aW9uL2pzb24qDW1hbmlmZXN0Lmpzb24=
+{
+  "name": "Familienplaner Christ",
+  "short_name": "Familienplaner",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#f8f9fa",
+  "theme_color": "#2c3e50",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
