@@ -1,14 +1,13 @@
-const CACHE_NAME = 'planer-v4'; // Version erhöht für das Update
+const CACHE_NAME = 'planer-v4';
 const ASSETS = [
   'index.html',
   'manifest.json',
   'icon-192.png',
   'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css',
-  'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/font/bootstrap-icons.css',
+  'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css',
   'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js'
 ];
 
-// Install-Event: Assets in den Cache laden
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
@@ -17,7 +16,6 @@ self.addEventListener('install', e => {
   );
 });
 
-// Activate-Event: Alte Caches löschen
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(keys => {
@@ -32,13 +30,11 @@ self.addEventListener('activate', e => {
   );
 });
 
-// Fetch-Event: Daten laden (Supabase-Live-Anfragen ignorieren)
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
 
-  // KRITISCH FÜR SUPABASE: Datenbank-Anfragen dürfen NIEMALS gecacht werden
   if (url.hostname.includes('supabase.co')) {
-    return; // Reicht die Anfrage direkt an das Live-Netzwerk weiter
+    return;
   }
 
   e.respondWith(
@@ -48,7 +44,6 @@ self.addEventListener('fetch', e => {
   );
 });
 
-// Push-Benachrichtigungen
 self.addEventListener('push', e => {
   const data = e.data ? e.data.json() : { title: 'Familienplaner', body: 'Neues Update!' };
   const options = {
