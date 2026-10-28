@@ -5,401 +5,441 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Familienplaner Christ - Supabase Edition</title>
     <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2c3e50">
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Supabase JS Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { background-color: #f8f9fa; font-family: sans-serif; }
-        .calendar-container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; }
-        .calendar-header-day { font-weight: bold; background: #2c3e50; color: white; padding: 8px; border-radius: 4px; }
-        .calendar-day { min-height: 100px; border: 1px solid #dee2e6; border-radius: 4px; padding: 5px; text-align: left; background: #fff; position: relative; }
-        .calendar-day.today { background-color: #e8f4fd; border-color: #3498db; }
-        .calendar-day.other-month { background-color: #f1f3f5; color: #adb5bd; }
-        .calendar-day-num { font-weight: bold; margin-bottom: 5px; display: block; }
-        .event-badge { font-size: 0.75rem; padding: 2px 5px; margin-bottom: 2px; border-radius: 3px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; background: #e9ecef; color: #495057; border-left: 3px solid #6c757d; }
-        .event-Josef-B { background: #e3f2fd; color: #0d47a1; border-left: 3px solid #2196f3; }
-        .event-Heidi { background: #fce4ec; color: #880e4f; border-left: 3px solid #e91e63; }
-        .event-Josef-R { background: #e8f5e9; color: #1b5e20; border-left: 3px solid #4caf50; }
-        .event-Markus { background: #fff3e0; color: #e65100; border-left: 3px solid #ff9800; }
-        .nav-buttons { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        body { background-color: #f8f9fa; font-family: system-ui, -apple-system, sans-serif; }
+        .card { border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-radius: 12px; margin-bottom: 20px; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; background: #dee2e6; padding: 5px; border-radius: 8px; }
+        .calendar-header { font-weight: bold; text-align: center; background: #e9ecef; padding: 8px 0; border-radius: 4px; font-size: 0.9rem; }
+        .calendar-day { background: #fff; min-height: 90px; padding: 5px; border-radius: 4px; display: flex; flex-direction: column; justify-content: space-between; }
+        .calendar-day.today { background: #fff3cd; border: 2px solid #ffc107; }
+        .calendar-day.other-month { background: #f1f3f5; color: #adb5bd; }
+        .day-number { font-weight: bold; font-size: 0.85rem; margin-bottom: 5px; }
+        .event-badge { font-size: 0.75rem; padding: 2px 4px; margin-bottom: 2px; border-radius: 3px; color: white; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .bg-josefb { background-color: #0d6efd; }
+        .bg-heidi { background-color: #dc3545; }
+        .bg-josefr { background-color: #198754; }
+        .bg-markus { background-color: #fd7e14; }
+        .bg-alle { background-color: #6c757d; }
+        .week-view-container { display: flex; flex-direction: column; gap: 10px; }
+        .week-day-row { background: white; padding: 10px; border-radius: 8px; border-left: 5px solid #6c757d; }
+        .week-day-row.today { border-left-color: #ffc107; background: #fff3cd; }
     </style>
 </head>
 <body>
-    <div class="container my-4">
-        <header class="text-center mb-4">
-            <h1 class="display-6 fw-bold text-primary">Familienplaner Christ</h1>
-            <span class="badge bg-success" id="syncStatus">Supabase Verbunden</span>
-        </header>
 
-        <div class="row g-4">
-            <!-- Linke Spalte: Formulare -->
-            <div class="col-lg-4">
-                <!-- Termin-Formular -->
-                <div class="card mb-4 shadow-sm">
-                    <div class="card-header bg-primary text-white"><h5 class="mb-0"><i class="bi bi-calendar-plus"></i> Neuen Termin eintragen</h5></div>
-                    <div class="card-body">
-                        <form id="appointmentForm">
-                            <div class="mb-3">
-                                <label class="form-label">Titel / Beschreibung</label>
-                                <input type="text" id="title" class="form-content form-control" required>
-                            </div>
-                            <div class="row g-2 mb-3">
-                                <div class="col-6">
-                                    <label class="form-label">Beginn-Datum</label>
-                                    <input type="date" id="startDate" class="form-control" required>
-                                </div>
-                                <div class="col-6">
-                                    <label class="form-label">Ende-Datum</label>
-                                    <input type="date" id="endDate" class="form-control" required>
-                                </div>
-                            </div>
-                            <div class="row g-2 mb-3">
-                                <div class="col-6">
-                                    <label class="form-label">Uhrzeit Beginn</label>
-                                    <div class="input-group">
-                                        <select id="startHour" class="form-select"></select>
-                                        <span class="input-group-text">:</span>
-                                        <select id="startMin" class="form-select"></select>
-                                    </div>
-                                </div>
-                                <div class="col-6">
-                                    <label class="form-label">Uhrzeit Ende</label>
-                                    <div class="input-group">
-                                        <select id="endHour" class="form-select"></select>
-                                        <span class="input-group-text">:</span>
-                                        <select id="endMin" class="form-select"></select>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Zugeordnet für:</label>
-                                <select id="assignedTo" class="form-select">
-                                    <option value="Alle">Alle</option>
-                                    <option value="Josef B.">Josef B.</option>
-                                    <option value="Heidi">Heidi</option>
-                                    <option value="Josef R.">Josef R.</option>
-                                    <option value="Markus">Markus</option>
+<div class="container py-4">
+    <header class="pb-3 mb-4 border-bottom d-flex justify-content-between align-items-center">
+        <span class="fs-4 fw-bold text-primary"><i class="bi bi-calendar3-event"></i> Familienplaner Christ</span>
+        <span id="connection-status" class="badge bg-success">Online-Modus</span>
+    </header>
+
+    <div class="row">
+        <!-- Formular-Spalte -->
+        <div class="col-lg-4">
+            <!-- Termin eintragen -->
+            <div class="card p-3">
+                <h4 class="card-title mb-3 text-secondary"><i class="bi bi-plus-circle"></i> Neuen Termin eintragen</h4>
+                <form id="appointment-form">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Titel / Beschreibung</label>
+                        <input type="text" id="title" class="form-control" placeholder="z.B. Zahnarzt" required>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label fw-semibold">Beginn-Datum</label>
+                            <input type="date" id="start_date" class="form-control" required>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-semibold">Ende-Datum</label>
+                            <input type="date" id="end_date" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label fw-semibold">Uhrzeit Beginn</label>
+                            <div class="d-flex gap-1">
+                                <select id="start_hour" class="form-select" required></select>
+                                <select id="start_minute" class="form-select" required>
+                                    <option value="00">:00</option>
+                                    <option value="15">:15</option>
+                                    <option value="30">:30</option>
+                                    <option value="45">:45</option>
                                 </select>
                             </div>
-                            <div class="mb-3">
-                                <label class="form-label">Erinnerung</label>
-                                <select id="reminder" class="form-select">
-                                    <option value="Keine">Keine</option>
-                                    <option value="0">Pünktlich</option>
-                                    <option value="15">15 Minuten vorher</option>
-                                    <option value="30">30 Minuten vorher</option>
-                                    <option value="60">1 Stunde vorher</option>
-                                    <option value="1440">1 Tag vorher</option>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-semibold">Uhrzeit Ende</label>
+                            <div class="d-flex gap-1">
+                                <select id="end_hour" class="form-select" required></select>
+                                <select id="end_minute" class="form-select" required>
+                                    <option value="00">:00</option>
+                                    <option value="15">:15</option>
+                                    <option value="30">:30</option>
+                                    <option value="45">:45</option>
                                 </select>
                             </div>
-                            <button type="submit" class="btn btn-primary w-100">Termin sichern</button>
-                        </form>
+                        </div>
                     </div>
-                </div>
-
-                <!-- Einkaufsliste -->
-                <div class="card shadow-sm">
-                    <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0"><i class="bi bi-cart3"></i> Einkaufsliste</h5>
-                        <button class="btn btn-sm btn-danger" id="clearCompletedBtn">Erledigte löschen</button>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Zugeordnet für:</label>
+                        <select id="assigned_to" class="form-select" required>
+                            <option value="Josef B.">Josef B.</option>
+                            <option value="Heidi">Heidi</option>
+                            <option value="Josef R.">Josef R.</option>
+                            <option value="Markus">Markus</option>
+                            <option value="Alle">Alle</option>
+                        </select>
                     </div>
-                    <div class="card-body">
-                        <form id="shoppingForm" class="input-group mb-3">
-                            <input type="text" id="product" class="form-control" placeholder="Artikel / Produkt" required>
-                            <select id="shopPerson" class="form-select" style="max-width: 110px;">
-                                <option value="Alle">Alle</option>
-                                <option value="Josef B.">Josef B.</option>
-                                <option value="Heidi">Heidi</option>
-                                <option value="Josef R.">Josef R.</option>
-                                <option value="Markus">Markus</option>
-                            </select>
-                            <button type="submit" class="btn btn-success">Auf die Liste</button>
-                        </form>
-                        <ul class="list-group" id="shoppingListContainer"></ul>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Standard-Erinnerung</label>
+                        <select id="reminder" class="form-select">
+                            <option value="Keine">Keine Erinnerung</option>
+                            <option value="15 Min">15 Minuten vorher</option>
+                            <option value="30 Min">30 Minuten vorher</option>
+                            <option value="1 Std">1 Stunde vorher</option>
+                            <option value="1 Tag">1 Tag vorher</option>
+                        </select>
                     </div>
-                </div>
+                    <button type="submit" class="btn btn-primary w-100 fw-bold"><i class="bi bi-check-circle"></i> Termin sichern</button>
+                </form>
             </div>
 
-            <!-- Rechte Spalte: Kalender-Ansichten -->
-            <div class="col-lg-8">
-                <div class="calendar-container">
-                    <div class="nav-buttons">
-                        <div>
-                            <button class="btn btn-outline-secondary btn-sm me-1" id="viewMonthBtn">Monat</button>
-                            <button class="btn btn-outline-secondary btn-sm" id="viewWeekBtn">Woche</button>
-                        </div>
-                        <h4 id="calendarTitle" class="mb-0 fw-bold text-secondary"></h4>
-                        <div>
-                            <button class="btn btn-primary btn-sm" id="prevBtn"><i class="bi bi-chevron-left"></i></button>
-                            <button class="btn btn-outline-primary btn-sm mx-1" id="todayBtn">Heute</button>
-                            <button class="btn btn-primary btn-sm" id="nextBtn"><i class="bi bi-chevron-right"></i></button>
-                        </div>
+            <!-- Einkaufsliste -->
+            <div class="card p-3">
+                <h4 class="card-title mb-3 text-secondary"><i class="bi bi-cart-plus"></i> Artikel erfassen</h4>
+                <form id="shopping-form" class="row g-2">
+                    <div class="col-10">
+                        <input type="text" id="product" class="form-control" placeholder="Produkt eingeben..." required>
                     </div>
-                    <div class="calendar-grid" id="calendarGrid"></div>
+                    <div class="col-2">
+                        <button type="submit" class="btn btn-success w-100"><i class="bi bi-plus-lg"></i></button>
+                    </div>
+                </form>
+                <ul id="shopping-list-ul" class="list-group mt-3"></ul>
+            </div>
+        </div>
+
+        <!-- Kalender-Spalte -->
+        <div class="col-lg-8">
+            <div class="card p-3">
+                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                    <div class="btn-group">
+                        <button id="btn-prev" class="btn btn-outline-secondary btn-sm"><i class="bi bi-chevron-left"></i> Zurück</button>
+                        <button id="btn-today" class="btn btn-outline-secondary btn-sm">Heute</button>
+                        <button id="btn-next" class="btn btn-outline-secondary btn-sm">Vor <i class="bi bi-chevron-right"></i></button>
+                    </div>
+                    <h3 id="calendar-title" class="mb-0 text-center flex-grow-1 fs-5 fw-bold text-uppercase"></h3>
+                    <div class="btn-group">
+                        <button id="btn-month-view" class="btn btn-primary btn-sm">Monat</button>
+                        <button id="btn-week-view" class="btn btn-outline-primary btn-sm">Woche</button>
+                    </div>
                 </div>
+
+                <!-- Dynamischer Ansichts-Container -->
+                <div id="calendar-view-container"></div>
             </div>
         </div>
     </div>
+</div>
 
-    <script>
-        // Supabase-Konfiguration
-        const SUPABASE_URL = 'https://hdettzthupebrsgqiorv.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhkZXR0enRodXBlYnJzZ3Fpb3J2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMyMTMxNDgsImV4cCI6MjEwODc4OTE0OH0.ehU5KkBtgGJvuqjw4aBxprZ7a1rtBhhRia_hDi4CBHw';
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+<script>
+    // Supabase Konfiguration
+    const SUPABASE_URL = 'https://hdettzthupebrsgqiorv.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhkZXR0enRodXBlYnJzZ3Fpb3J2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMyMTMxNDgsImV4cCI6MjEwODc4OTE0OH0.ehU5KkBtgGJvuqjw4aBxprZ7a1rtBhhRia_hDi4CBHw';
+    
+    const supabase =  window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // State-Variablen
-        let currentView = 'month'; // 'month' oder 'week'
-        let currentDate = new Date();
-        let appointmentsData = [];
-        let shoppingData = [];
+    let currentNavDate = new Date();
+    let currentView = 'month'; // 'month' oder 'week'
+    let globalAppointments = [];
 
-        // Zeit-Dropdowns füllen (nur volle Stunden und Viertelstunden)
-        function initTimeDropdowns() {
-            const sh = document.getElementById('startHour'), eh = document.getElementById('endHour');
-            const sm = document.getElementById('startMin'), em = document.getElementById('endMin');
-            
-            for(let i=0; i<24; i++) {
-                let val = i.toString().padStart(2, '0');
-                sh.add(new Option(val, val));
-                eh.add(new Option(val, val));
-            }
-            ['00', '15', '30', '45'].forEach(m => {
-                sm.add(new Option(m, m));
-                em.add(new Option(m, m));
-            });
-            sh.value = "08"; sm.value = "00";
-            eh.value = "09"; em.value = "00";
+    // Uhrzeit Dropdowns füllen
+    function initTimeDropdowns() {
+        const startHour = document.getElementById('start_hour');
+        const endHour = document.getElementById('end_hour');
+        for (let i = 0; i < 24; i++) {
+            let h = i < 10 ? '0' + i : i;
+            startHour.options.add(new Option(h + ' Uhr', h));
+            endHour.options.add(new Option(h + ' Uhr', h));
         }
+        startHour.value = "08";
+        endHour.value = "09";
+    }
 
-        // Automatisches Setzen des Enddatums bei Änderung des Startdatums
-        document.getElementById('startDate').addEventListener('change', (e) => {
-            document.getElementById('endDate').value = e.target.value;
-        });
+    // Automatischer Enddatum-Vorschlag
+    document.getElementById('start_date').addEventListener('change', function() {
+        document.getElementById('end_date').value = this.value;
+    });
 
-        // Daten laden & Realtime Sync
-        async function loadAllData() {
-            await Promise.all([fetchAppointments(), fetchShoppingList()]);
+    // Personen-Farbe bestimmen
+    function getPersonClass(person) {
+        switch(person) {
+            case 'Josef B.': return 'bg-josefb';
+            case 'Heidi': return 'bg-heidi';
+            case 'Josef R.': return 'bg-josefr';
+            case 'Markus': return 'bg-markus';
+            default: return 'bg-alle';
+        }
+    }
+
+    // Termine aus Supabase holen
+    async function loadAppointments() {
+        const { data, error } = await supabase.from('appointments').select('*');
+        if (!error) {
+            globalAppointments = data;
             renderCalendar();
         }
+    }
 
-        async function fetchAppointments() {
-            const { data, error } = await supabase.from('appointments').select('*');
-            if (!error) appointmentsData = data || [];
+    // Kalender rendern (Weiche)
+    function renderCalendar() {
+        const container = document.getElementById('calendar-view-container');
+        const title = document.getElementById('calendar-title');
+        container.innerHTML = '';
+
+        if (currentView === 'month') {
+            title.innerText = currentNavDate.toLocaleString('de-DE', { month: 'long', year: 'numeric' });
+            renderMonthView(container);
+        } else {
+            const startOfWeek = getStartOfWeek(currentNavDate);
+            const endOfWeek = new Date(startOfWeek);
+            endOfWeek.setDate(endOfWeek.getDate() + 6);
+            title.innerText = `KW ${getWeekNumber(currentNavDate)} (${startOfWeek.toLocaleDateString('de-DE')} - ${endOfWeek.toLocaleDateString('de-DE')})`;
+            renderWeekView(container);
+        }
+    }
+
+    // Monatsansicht generieren
+    function renderMonthView(container) {
+        const grid = document.createElement('div');
+        grid.className = 'calendar-grid';
+
+        const daysOfWeek = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+        daysOfWeek.forEach(d => {
+            const header = document.createElement('div');
+            header.className = 'calendar-header';
+            header.innerText = d;
+            grid.appendChild(header);
+        });
+
+        const year = currentNavDate.getFullYear();
+        const month = currentNavDate.getMonth();
+        const firstDayIndex = (new Date(year, month, 1).getDay() + 6) % 7;
+        const totalDays = new Date(year, month + 1, 0).getDate();
+        const prevTotalDays = new Date(year, month, 0).getDate();
+
+        // Letzte Tage des Vormonats füllen
+        for (let i = firstDayIndex; i > 0; i--) {
+            const dayCell = document.createElement('div');
+            dayCell.className = 'calendar-day other-month';
+            dayCell.innerHTML = `<div class="day-number">${prevTotalDays - i + 1}</div>`;
+            grid.appendChild(dayCell);
         }
 
-        async function fetchShoppingList() {
-            const { data, error } = await supabase.from('shopping_list').select('*').order('created_at', { ascending: true });
-            if (!error) {
-                shoppingData = data || [];
-                renderShoppingList();
+        // Aktuelle Monatstage füllen
+        const todayStr = new Date().toDateString();
+        for (let day = 1; day <= totalDays; day++) {
+            const dayCell = document.createElement('div');
+            dayCell.className = 'calendar-day';
+            const loopDate = new Date(year, month, day);
+            if (loopDate.toDateString() === todayStr) dayCell.classList.add('today');
+
+            dayCell.innerHTML = `<div class="day-number">${day}</div><div class="events-container w-100"></div>`;
+            const eventsContainer = dayCell.querySelector('.events-container');
+
+            // Termine filtern und einfügen
+            const dateIso = loopDate.toISOString().split('T')[0];
+            const dayEvents = globalAppointments.filter(e => dateIso >= e.start_date && dateIso <= e.end_date);
+            
+            dayEvents.forEach(ev => {
+                const badge = document.createElement('div');
+                badge.className = `event-badge ${getPersonClass(ev.assigned_to)}`;
+                badge.innerText = `${ev.start_time ? ev.start_time.substring(0,5) : ''} ${ev.title}`;
+                badge.title = `${ev.title} (${ev.assigned_to}) ${ev.reminder !== 'Keine' ? '🔔' : ''}`;
+                eventsContainer.appendChild(badge);
+            });
+
+            grid.appendChild(dayCell);
+        }
+        container.appendChild(grid);
+    }
+
+    // Wochenansicht generieren
+    function renderWeekView(container) {
+        const weekContainer = document.createElement('div');
+        weekContainer.className = 'week-view-container';
+        const startOfWeek = getStartOfWeek(currentNavDate);
+        const todayStr = new Date().toDateString();
+
+        for (let i = 0; i < 7; i++) {
+            const loopDate = new Date(startOfWeek);
+            loopDate.setDate(loopDate.getDate() + i);
+            const dateIso = loopDate.toISOString().split('T')[0];
+
+            const row = document.createElement('div');
+            row.className = 'week-day-row';
+            if (loopDate.toDateString() === todayStr) row.classList.add('today');
+
+            const dayName = loopDate.toLocaleString('de-DE', { weekday: 'long', day: 'numeric', month: 'numeric' });
+            row.innerHTML = `<h5 class="fw-bold border-bottom pb-1 text-muted">${dayName}</h5><div class="week-events d-flex flex-column gap-1"></div>`;
+            const weekEvents = row.querySelector('.week-events');
+
+            const dayEvents = globalAppointments.filter(e => dateIso >= e.start_date && dateIso <= e.end_date);
+            if (dayEvents.length === 0) {
+                weekEvents.innerHTML = '<span class="text-subtle font-monospace text-secondary" style="font-size:0.85rem;">Keine Termine</span>';
+            } else {
+                dayEvents.forEach(ev => {
+                    const block = document.createElement('div');
+                    block.className = `p-2 rounded text-white d-flex justify-content-between align-items-center ${getPersonClass(ev.assigned_to)}`;
+                    block.style.fontSize = '0.9rem';
+                    block.innerHTML = `
+                        <div>
+                            <strong>${ev.start_time ? ev.start_time.substring(0,5) : '00:00'} - ${ev.end_time ? ev.end_time.substring(0,5) : '24:00'}</strong>: ${ev.title}
+                        </div>
+                        <span class="badge bg-light text-dark">${ev.assigned_to} ${ev.reminder !== 'Keine' ? '🔔 ' + ev.reminder : ''}</span>
+                    `;
+                    weekEvents.appendChild(block);
+                });
             }
+            weekContainer.appendChild(row);
         }
+        container.appendChild(weekContainer);
+    }
 
-        // Realtime Subscription
-        supabase.channel('public-db-changes')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, () => { fetchAppointments().then(renderCalendar); })
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'shopping_list' }, () => { fetchShoppingList(); })
-            .subscribe();
+    // Hilfsfunktionen für Kalenderwochen
+    function getStartOfWeek(date) {
+        const d = new Date(date);
+        const day = d.getDay();
+        const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+        return new Date(d.setDate(diff));
+    }
 
-        // Termin speichern
-        document.getElementById('appointmentForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const newApp = {
-                title: document.getElementById('title').value,
-                start_date: document.getElementById('startDate').value,
-                end_date: document.getElementById('endDate').value,
-                start_time: `${document.getElementById('startHour').value}:${document.getElementById('startMin').value}:00`,
-                end_time: `${document.getElementById('endHour').value}:${document.getElementById('endMin').value}:00`,
-                assigned_to: document.getElementById('assignedTo').value,
-                reminder: document.getElementById('reminder').value
-            };
-            const { error } = await supabase.from('appointments').insert([newApp]);
-            if(!error) document.getElementById('appointmentForm').reset();
-        });
+    function getWeekNumber(d) {
+        const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+        date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
+        const startOfYear = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+        return Math.ceil((((date - startOfYear) / 86400000) + 1) / 7);
+    }
 
-        // Einkaufsartikel hinzufügen
-        document.getElementById('shoppingForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const newItem = {
-                product: document.getElementById('product').value,
-                person: document.getElementById('shopPerson').value,
-                completed: false
-            };
-            const { error } = await supabase.from('shopping_list').insert([newItem]);
-            if(!error) document.getElementById('product').value = '';
-        });
+    // Termin speichern
+    document.getElementById('appointment-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const newAppointment = {
+            title: document.getElementById('title').value,
+            start_date: document.getElementById('start_date').value,
+            end_date: document.getElementById('end_date').value,
+            start_time: `${document.getElementById('start_hour').value}:${document.getElementById('start_minute').value}:00`,
+            end_time: `${document.getElementById('end_hour').value}:${document.getElementById('end_minute').value}:00`,
+            assigned_to: document.getElementById('assigned_to').value,
+            reminder: document.getElementById('reminder').value
+        };
 
-        // Artikel abhaken
-        async function toggleShoppingItem(id, currentStatus) {
-            await supabase.from('shopping_list').update({ completed: !currentStatus }).eq('id', id);
+        const { error } = await supabase.from('appointments').insert([newAppointment]);
+        if (!error) {
+            document.getElementById('appointment-form').reset();
+            initTimeDropdowns();
+            loadAppointments();
+        } else {
+            alert('Fehler beim Sichern des Termins: ' + error.message);
         }
+    });
 
-        // Erledigte Einkäufe löschen
-        document.getElementById('clearCompletedBtn').addEventListener('click', async () => {
-            await supabase.from('shopping_list').delete().eq('completed', true);
-        });
-
-        // Einkaufsliste rendern
-        function renderShoppingList() {
-            const container = document.getElementById('shoppingListContainer');
-            container.innerHTML = '';
-            if (shoppingData.length === 0) {
-                container.innerHTML = '<li class="list-group-item text-muted text-center py-3">Die Einkaufsliste ist leer</li>';
+    // Einkaufsliste laden
+    async function loadShoppingList() {
+        const { data, error } = await supabase.from('shopping_list').select('*').order('created_at', { ascending: false });
+        if (!error) {
+            const ul = document.getElementById('shopping-list-ul');
+            ul.innerHTML = '';
+            if (data.length === 0) {
+                ul.innerHTML = '<li class="list-group-item text-center text-muted">Die Einkaufsliste ist leer</li>';
                 return;
             }
-            shoppingData.forEach(item => {
+            data.forEach(item => {
                 const li = document.createElement('li');
-                li.className = `list-group-item d-flex justify-content-between align-items-center ${item.completed ? 'list-group-item-light text-decoration-line-through text-muted' : ''}`;
-                li.style.cursor = 'pointer';
-                li.onclick = () => toggleShoppingItem(item.id, item.completed);
+                li.className = 'list-group-item d-flex justify-content-between align-items-center';
                 li.innerHTML = `
-                    <div>
-                        <input class="form-check-input me-2" type="checkbox" ${item.completed ? 'checked' : ''}>
-                        <span>${item.product}</span>
-                    </div>
-                    <span class="badge bg-secondary rounded-pill">${item.person}</span>
+                    <span>${item.product}</span>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteShoppingItem('${item.id}')"><i class="bi bi-trash"></i></button>
                 `;
-                container.appendChild(li);
+                ul.appendChild(li);
             });
         }
+    }
 
-        // Kalender rendern
-        function renderCalendar() {
-            const grid = document.getElementById('calendarGrid');
-            const title = document.getElementById('calendarTitle');
-            grid.innerHTML = '';
-
-            const dayNames = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
-            dayNames.forEach(d => {
-                const h = document.createElement('div');
-                h.className = 'calendar-header-day';
-                h.innerText = d;
-                grid.appendChild(h);
-            });
-
-            if (currentView === 'month') {
-                renderMonthView(grid, title);
-            } else {
-                renderWeekView(grid, title);
-            }
+    // Einkaufsartikel speichern
+    document.getElementById('shopping-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const productInput = document.getElementById('product');
+        const newItem = { product: productInput.value };
+        const { error } = await supabase.from('shopping_list').insert([newItem]);
+        if (!error) {
+            productInput.value = '';
+            loadShoppingList();
         }
+    });
 
-        function renderMonthView(grid, title) {
-            const year = currentDate.getFullYear();
-            const month = currentDate.getMonth();
-            title.innerText = currentDate.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
+    // Einkaufsartikel löschen
+    window.deleteShoppingItem = async function(id) {
+        await supabase.from('shopping_list').delete().eq('id', id);
+        loadShoppingList();
+    };
 
-            const firstDayIndex = (new Date(year, month, 1).getDay() + 6) % 7;
-            const totalDays = new Date(year, month + 1, 0).getDate();
-            const prevTotalDays = new Date(year, month, 0).getDate();
+    // Navigation-Event-Listener
+    document.getElementById('btn-prev').addEventListener('click', () => {
+        if (currentView === 'month') currentNavDate.setMonth(currentNavDate.getMonth() - 1);
+        else currentNavDate.setDate(currentNavDate.getDate() - 7);
+        renderCalendar();
+    });
+    document.getElementById('btn-next').addEventListener('click', () => {
+        if (currentView === 'month') currentNavDate.setMonth(currentNavDate.getMonth() + 1);
+        else currentNavDate.setDate(currentNavDate.getDate() + 7);
+        renderCalendar();
+    });
+    document.getElementById('btn-today').addEventListener('click', () => {
+        currentNavDate = new Date();
+        renderCalendar();
+    });
+    document.getElementById('btn-month-view').addEventListener('click', function() {
+        currentView = 'month';
+        this.classList.replace('btn-outline-primary', 'btn-primary');
+        document.getElementById('btn-week-view').classList.replace('btn-primary', 'btn-outline-primary');
+        renderCalendar();
+    });
+    document.getElementById('btn-week-view').addEventListener('click', function() {
+        currentView = 'week';
+        this.classList.replace('btn-outline-primary', 'btn-primary');
+        document.getElementById('btn-month-view').classList.replace('btn-primary', 'btn-outline-primary');
+        renderCalendar();
+    });
 
-            // Tage des Vormonats auffüllen
-            for (let i = firstDayIndex; i > 0; i--) {
-                createDayCell(grid, prevTotalDays - i + 1, true, new Date(year, month - 1, prevTotalDays - i + 1));
-            }
-            // Tage des aktuellen Monats
-            for (let i = 1; i <= totalDays; i++) {
-                const d = new Date(year, month, i);
-                const isToday = d.toDateString() === new Date().toDateString();
-                createDayCell(grid, i, false, d, isToday);
-            }
-            // Tage des Folgemonats auffüllen für stabiles 6-Wochen-Raster
-            const remainingCells = 42 - (firstDayIndex + totalDays);
-            for (let i = 1; i <= remainingCells; i++) {
-                createDayCell(grid, i, true, new Date(year, month + 1, i));
-            }
-        }
+    // Supabase Realtime-Kanäle abonnieren für Live-Updates
+    supabase.channel('live-updates')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, () => { loadAppointments(); })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'shopping_list' }, () => { loadShoppingList(); })
+        .subscribe();
 
-        function renderWeekView(grid, title) {
-            const currentDay = currentDate.getDay();
-            const distanceToMonday = (currentDay + 6) % 7;
-            const monday = new Date(currentDate);
-            monday.setDate(currentDate.getDate() - distanceToMonday);
-
-            const sunday = new Date(monday);
-            sunday.setDate(monday.getDate() + 6);
-
-            title.innerText = `KW ${getWeekNumber(monday)} (${monday.getDate()}. - ${sunday.getDate()}. ${monday.toLocaleDateString('de-DE', { month: 'short' })})`;
-
-            for (let i = 0; i < 7; i++) {
-                const d = new Date(monday);
-                d.setDate(monday.getDate() + i);
-                const isToday = d.toDateString() === new Date().toDateString();
-                createDayCell(grid, d.getDate(), false, d, isToday, true);
-            }
-        }
-
-        function createDayCell(grid, num, isOtherMonth, dateObj, isToday = false, isWeekView = false) {
-            const cell = document.createElement('div');
-            cell.className = `calendar-day ${isOtherMonth ? 'other-month' : ''} ${isToday ? 'today' : ''}`;
-            if(isWeekView) cell.style.minHeight = '250px';
-
-            const span = document.createElement('span');
-            span.className = 'calendar-day-num';
-            span.innerText = num;
-            cell.appendChild(span);
-
-            // Termine für diesen Tag matchen
-            const dateStr = dateObj.toISOString().split('T')[0];
-            const dayApps = appointmentsData.filter(app => dateStr >= app.start_date && dateStr <= app.end_date);
-
-            dayApps.forEach(app => {
-                const badge = document.createElement('div');
-                const personClass = app.assigned_to ? 'event-' + app.assigned_to.replace(' ', '-') : '';
-                badge.className = `event-badge ${personClass}`;
-                
-                let timeStr = '';
-                if(app.start_time) {
-                    timeStr = app.start_time.substring(0, 5) + ' ';
-                }
-                badge.innerText = `${timeStr}${app.title}`;
-                badge.title = `${app.title} (${app.assigned_to || 'Alle'}) ${app.start_time ? '\nZeit: ' + app.start_time.substring(0,5) + ' - ' + app.end_time.substring(0,5) : ''} ${app.reminder !== 'Keine' ? '\nErinnerung aktiv' : ''}`;
-                cell.appendChild(badge);
-            });
-
-            grid.appendChild(cell);
-        }
-
-        function getWeekNumber(d) {
-            d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-            d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
-            var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
-            return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
-        }
-
-        // Navigation & Event Listener
-        document.getElementById('viewMonthBtn').addEventListener('click', () => { currentView = 'month'; renderCalendar(); });
-        document.getElementById('viewWeekBtn').addEventListener('click', () => { currentView = 'week'; renderCalendar(); });
-        document.getElementById('todayBtn').addEventListener('click', () => { currentDate = new Date(); renderCalendar(); });
+    // App Start
+    document.addEventListener("DOMContentLoaded", () => {
+        // Heutiges Datum in Formular setzen
+        const todayStr = new Date().toISOString().split('T')[0];
+        document.getElementById('start_date').value = todayStr;
+        document.getElementById('end_date').value = todayStr;
         
-        document.getElementById('prevBtn').addEventListener('click', () => {
-            if (currentView === 'month') currentDate.setMonth(currentDate.getMonth() - 1);
-            else currentDate.setDate(currentDate.getDate() - 7);
-            renderCalendar();
-        });
-        
-        document.getElementById('nextBtn').addEventListener('click', () => {
-            if (currentView === 'month') currentDate.setMonth(currentDate.getMonth() + 1);
-            else currentDate.setDate(currentDate.getDate() + 7);
-            renderCalendar();
-        });
+        initTimeDropdowns();
+        loadAppointments();
+        loadShoppingList();
+    });
 
-        // App-Initialisierung
-        window.addEventListener('DOMContentLoaded', () => {
-            // Heutiges Datum als Standard setzen
-            const todayStr = new Date().toISOString().split('T')[0];
-            document.getElementById('startDate').value = todayStr;
-            document.getElementById('endDate').value = todayStr;
-            
-            initTimeDropdowns();
-            loadAllData();
-        });
-
-        // Service Worker Registrierung
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js');
-        }
-    </script>
+    // Service Worker registrieren
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js').catch(err => console.log('SW Error', err));
+    }
+</script>
 </body>
 </html>
