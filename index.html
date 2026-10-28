@@ -4,568 +4,402 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Familienplaner Christ - Supabase Edition</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-    <!-- Supabase JS Library -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="manifest" href="manifest.json">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { background-color: #f8f9fa; font-family: sans-serif; }
-        .calendar-container { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
-        .calendar-header-day { font-weight: bold; text-align: center; padding: 10px; background: #2c3e50; color: #fff; border-radius: 4px; }
-        .calendar-day { min-height: 100px; border: 1px solid #dee2e6; padding: 5px; border-radius: 4px; position: relative; background: #fff; }
-        .calendar-day.today { background-color: #e8f4fd; border-color: #2b8a3e; }
+        .calendar-container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; }
+        .calendar-header-day { font-weight: bold; background: #2c3e50; color: white; padding: 8px; border-radius: 4px; }
+        .calendar-day { min-height: 100px; border: 1px solid #dee2e6; border-radius: 4px; padding: 5px; text-align: left; background: #fff; position: relative; }
+        .calendar-day.today { background-color: #e8f4fd; border-color: #3498db; }
         .calendar-day.other-month { background-color: #f1f3f5; color: #adb5bd; }
-        .day-number { font-weight: bold; margin-bottom: 5px; display: block; }
-        .event-badge { font-size: 0.75rem; padding: 2px 6px; margin-bottom: 3px; border-radius: 3px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #fff; }
-        .badge-josefb { background-color: #0d6efd; }
-        .badge-heidi { background-color: #dc3545; }
-        .badge-josefr { background-color: #ffc107; color: #000; }
-        .badge-markus { background-color: #198754; }
-        .badge-all { background-color: #6c757d; }
-        .week-list-day { border-left: 4px solid #2c3e50; padding-left: 10px; margin-bottom: 15px; }
+        .calendar-day-num { font-weight: bold; margin-bottom: 5px; display: block; }
+        .event-badge { font-size: 0.75rem; padding: 2px 5px; margin-bottom: 2px; border-radius: 3px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; background: #e9ecef; color: #495057; border-left: 3px solid #6c757d; }
+        .event-Josef-B { background: #e3f2fd; color: #0d47a1; border-left: 3px solid #2196f3; }
+        .event-Heidi { background: #fce4ec; color: #880e4f; border-left: 3px solid #e91e63; }
+        .event-Josef-R { background: #e8f5e9; color: #1b5e20; border-left: 3px solid #4caf50; }
+        .event-Markus { background: #fff3e0; color: #e65100; border-left: 3px solid #ff9800; }
+        .nav-buttons { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
     </style>
 </head>
 <body>
     <div class="container my-4">
-        <header class="d-flex justify-content-between align-items-center pb-3 mb-4 border-bottom">
-            <h1 class="h3 mb-0 text-dark"><i class="bi bi-calendar3 text-primary me-2"></i>Familienplaner Christ</h1>
-            <span id="connection-status" class="badge bg-danger">Verbinde mit Supabase...</span>
+        <header class="text-center mb-4">
+            <h1 class="display-6 fw-bold text-primary">Familienplaner Christ</h1>
+            <span class="badge bg-success" id="syncStatus">Supabase Verbunden</span>
         </header>
 
         <div class="row g-4">
-            <!-- Formular-Spalte -->
+            <!-- Linke Spalte: Formulare -->
             <div class="col-lg-4">
                 <!-- Termin-Formular -->
                 <div class="card mb-4 shadow-sm">
-                    <div class="card-header bg-primary text-white"><i class="bi bi-plus-circle me-2"></i>Neuen Termin eintragen</div>
+                    <div class="card-header bg-primary text-white"><h5 class="mb-0"><i class="bi bi-calendar-plus"></i> Neuen Termin eintragen</h5></div>
                     <div class="card-body">
-                        <form id="appointment-form">
+                        <form id="appointmentForm">
                             <div class="mb-3">
                                 <label class="form-label">Titel / Beschreibung</label>
-                                <input type="text" id="title" class="form-control" required placeholder="z. B. Arzttermin">
+                                <input type="text" id="title" class="form-content form-control" required>
                             </div>
                             <div class="row g-2 mb-3">
                                 <div class="col-6">
                                     <label class="form-label">Beginn-Datum</label>
-                                    <input type="date" id="start-date" class="form-control" required>
+                                    <input type="date" id="startDate" class="form-control" required>
                                 </div>
                                 <div class="col-6">
                                     <label class="form-label">Ende-Datum</label>
-                                    <input type="date" id="end-date" class="form-control" required>
+                                    <input type="date" id="endDate" class="form-control" required>
                                 </div>
                             </div>
                             <div class="row g-2 mb-3">
-                                <label class="form-label mb-0">Uhrzeit Beginn</label>
                                 <div class="col-6">
-                                    <select id="start-hour" class="form-select"></select>
+                                    <label class="form-label">Uhrzeit Beginn</label>
+                                    <div class="input-group">
+                                        <select id="startHour" class="form-select"></select>
+                                        <span class="input-group-text">:</span>
+                                        <select id="startMin" class="form-select"></select>
+                                    </div>
                                 </div>
                                 <div class="col-6">
-                                    <select id="start-minute" class="form-select">
-                                        <option value="00">00</option>
-                                        <option value="15">15</option>
-                                        <option value="30">30</option>
-                                        <option value="45">45</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="row g-2 mb-3">
-                                <label class="form-label mb-0">Uhrzeit Ende</label>
-                                <div class="col-6">
-                                    <select id="end-hour" class="form-select"></select>
-                                </div>
-                                <div class="col-6">
-                                    <select id="end-minute" class="form-select">
-                                        <option value="00">00</option>
-                                        <option value="15">15</option>
-                                        <option value="30">30</option>
-                                        <option value="45">45</option>
-                                    </select>
+                                    <label class="form-label">Uhrzeit Ende</label>
+                                    <div class="input-group">
+                                        <select id="endHour" class="form-select"></select>
+                                        <span class="input-group-text">:</span>
+                                        <select id="endMin" class="form-select"></select>
+                                    </div>
                                 </div>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Zugeordnet für:</label>
-                                <select id="assigned-to" class="form-select" required>
+                                <select id="assignedTo" class="form-select">
+                                    <option value="Alle">Alle</option>
                                     <option value="Josef B.">Josef B.</option>
                                     <option value="Heidi">Heidi</option>
                                     <option value="Josef R.">Josef R.</option>
                                     <option value="Markus">Markus</option>
-                                    <option value="Alle">Alle</option>
                                 </select>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">Standard-Erinnerung</label>
+                                <label class="form-label">Erinnerung</label>
                                 <select id="reminder" class="form-select">
-                                    <option value="none">Keine Erinnerung</option>
-                                    <option value="0">Pünktlich zum Ereignis</option>
+                                    <option value="Keine">Keine</option>
+                                    <option value="0">Pünktlich</option>
                                     <option value="15">15 Minuten vorher</option>
                                     <option value="30">30 Minuten vorher</option>
                                     <option value="60">1 Stunde vorher</option>
                                     <option value="1440">1 Tag vorher</option>
                                 </select>
                             </div>
-                            <button type="submit" class="btn btn-success w-100"><i class="bi bi-check-lg me-2"></i>Termin sichern</button>
+                            <button type="submit" class="btn btn-primary w-100">Termin sichern</button>
                         </form>
                     </div>
                 </div>
 
                 <!-- Einkaufsliste -->
                 <div class="card shadow-sm">
-                    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-                        <span><i class="bi bi-cart3 me-2"></i>Einkaufsliste</span>
-                        <button id="delete-completed-shopping" class="btn btn-sm btn-outline-light py-0">Erledigte löschen</button>
+                    <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="bi bi-cart3"></i> Einkaufsliste</h5>
+                        <button class="btn btn-sm btn-danger" id="clearCompletedBtn">Erledigte löschen</button>
                     </div>
                     <div class="card-body">
-                        <form id="shopping-form" class="row g-2 mb-3">
-                            <div class="col-12">
-                                <input type="text" id="shop-product" class="form-control" placeholder="Artikel / Produkt" required>
-                            </div>
-                            <div class="col-7">
-                                <input type="date" id="shop-date" class="form-control">
-                            </div>
-                            <div class="col-5">
-                                <select id="shop-person" class="form-select">
-                                    <option value="Alle">Alle</option>
-                                    <option value="Josef B.">Josef B.</option>
-                                    <option value="Heidi">Heidi</option>
-                                    <option value="Josef R.">Josef R.</option>
-                                    <option value="Markus">Markus</option>
-                                </select>
-                            </div>
-                            <div class="col-12">
-                                <button type="submit" class="btn btn-secondary w-100 btn-sm">Auf die Liste setzen</button>
-                            </div>
+                        <form id="shoppingForm" class="input-group mb-3">
+                            <input type="text" id="product" class="form-control" placeholder="Artikel / Produkt" required>
+                            <select id="shopPerson" class="form-select" style="max-width: 110px;">
+                                <option value="Alle">Alle</option>
+                                <option value="Josef B.">Josef B.</option>
+                                <option value="Heidi">Heidi</option>
+                                <option value="Josef R.">Josef R.</option>
+                                <option value="Markus">Markus</option>
+                            </select>
+                            <button type="submit" class="btn btn-success">Auf die Liste</button>
                         </form>
-                        <ul id="shopping-list-ul" class="list-group list-group-flush">
-                            <!-- Dynamische Einträge -->
-                        </ul>
+                        <ul class="list-group" id="shoppingListContainer"></ul>
                     </div>
                 </div>
             </div>
 
-            <!-- Kalender-Spalte -->
+            <!-- Rechte Spalte: Kalender-Ansichten -->
             <div class="col-lg-8">
-                <div class="calendar-container shadow-sm">
-                    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                <div class="calendar-container">
+                    <div class="nav-buttons">
                         <div>
-                            <button id="btn-prev" class="btn btn-outline-secondary btn-sm"><i class="bi bi-chevron-left"></i></button>
-                            <span id="calendar-title" class="fw-bold mx-2 h5 align-middle">Monat Jahr</span>
-                            <button id="btn-next" class="btn btn-outline-secondary btn-sm"><i class="bi bi-chevron-right"></i></button>
+                            <button class="btn btn-outline-secondary btn-sm me-1" id="viewMonthBtn">Monat</button>
+                            <button class="btn btn-outline-secondary btn-sm" id="viewWeekBtn">Woche</button>
                         </div>
-                        <div class="btn-group" role="group">
-                            <button id="view-month" class="btn btn-primary btn-sm active">Monatsansicht</button>
-                            <button id="view-week" class="btn btn-primary btn-sm">Wochenansicht</button>
+                        <h4 id="calendarTitle" class="mb-0 fw-bold text-secondary"></h4>
+                        <div>
+                            <button class="btn btn-primary btn-sm" id="prevBtn"><i class="bi bi-chevron-left"></i></button>
+                            <button class="btn btn-outline-primary btn-sm mx-1" id="todayBtn">Heute</button>
+                            <button class="btn btn-primary btn-sm" id="nextBtn"><i class="bi bi-chevron-right"></i></button>
                         </div>
                     </div>
-
-                    <!-- Monats-Ansichts-Container -->
-                    <div id="month-view-container">
-                        <div class="calendar-grid mb-2">
-                            <div class="calendar-header-day">Mo</div>
-                            <div class="calendar-header-day">Di</div>
-                            <div class="calendar-header-day">Mi</div>
-                            <div class="calendar-header-day">Do</div>
-                            <div class="calendar-header-day">Fr</div>
-                            <div class="calendar-header-day">Sa</div>
-                            <div class="calendar-header-day">So</div>
-                        </div>
-                        <div id="month-grid-days" class="calendar-grid"></div>
-                    </div>
-
-                    <!-- Wochen-Ansichts-Container -->
-                    <div id="week-view-container" class="d-none">
-                        <div id="week-list-days"></div>
-                    </div>
+                    <div class="calendar-grid" id="calendarGrid"></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Bootstrap Bundle JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
     <script>
-        // Supabase Configuration
-        const SUPABASE_URL = "https://hdettzthupebrsgqiorv.supabase.co";
-        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhkZXR0enRodXBlYnJzZ3Fpb3J2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMyMTMxNDgsImV4cCI6MjEwODc4OTE0OH0.ehU5KkBtgGJvuqjw4aBxprZ7a1rtBhhRia_hDi4CBHw";
-        
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // Supabase-Konfiguration
+        const SUPABASE_URL = 'https://hdettzthupebrsgqiorv.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhkZXR0enRodXBlYnJzZ3Fpb3J2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMyMTMxNDgsImV4cCI6MjEwODc4OTE0OH0.ehU5KkBtgGJvuqjw4aBxprZ7a1rtBhhRia_hDi4CBHw';
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // State variables
+        // State-Variablen
+        let currentView = 'month'; // 'month' oder 'week'
+        let currentDate = new Date();
         let appointmentsData = [];
         let shoppingData = [];
-        let currentView = 'month'; // 'month' or 'week'
-        let currentDate = new Date();
 
-        // Populate hours dropdowns
-        const startHourSelect = document.getElementById('start-hour');
-        const endHourSelect = document.getElementById('end-hour');
-        for(let i=0; i<24; i++) {
-            let hr = i < 10 ? '0' + i : i;
-            startHourSelect.innerHTML += `<option value="${hr}">${hr}</option>`;
-            endHourSelect.innerHTML += `<option value="${hr}">${hr}</option>`;
+        // Zeit-Dropdowns füllen (nur volle Stunden und Viertelstunden)
+        function initTimeDropdowns() {
+            const sh = document.getElementById('startHour'), eh = document.getElementById('endHour');
+            const sm = document.getElementById('startMin'), em = document.getElementById('endMin');
+            
+            for(let i=0; i<24; i++) {
+                let val = i.toString().padStart(2, '0');
+                sh.add(new Option(val, val));
+                eh.add(new Option(val, val));
+            }
+            ['00', '15', '30', '45'].forEach(m => {
+                sm.add(new Option(m, m));
+                em.add(new Option(m, m));
+            });
+            sh.value = "08"; sm.value = "00";
+            eh.value = "09"; em.value = "00";
         }
 
-        // Auto-match end date to start date
-        const startDateInput = document.getElementById('start-date');
-        const endDateInput = document.getElementById('end-date');
-        startDateInput.addEventListener('change', () => {
-            if(startDateInput.value) {
-                endDateInput.value = startDateInput.value;
-            }
+        // Automatisches Setzen des Enddatums bei Änderung des Startdatums
+        document.getElementById('startDate').addEventListener('change', (e) => {
+            document.getElementById('endDate').value = e.target.value;
         });
 
-        // Set default dates to today
-        const todayStr = new Date().toISOString().split('T')[0];
-        startDateInput.value = todayStr;
-        endDateInput.value = todayStr;
+        // Daten laden & Realtime Sync
+        async function loadAllData() {
+            await Promise.all([fetchAppointments(), fetchShoppingList()]);
+            renderCalendar();
+        }
 
-        // Check Connection
-        async function checkConnection() {
-            try {
-                const { data, error } = await supabaseClient.from('appointments').select('id').limit(1);
-                if(error) throw error;
-                document.getElementById('connection-status').className = "badge bg-success";
-                document.getElementById('connection-status').innerText = "Online (Supabase)";
-            } catch(e) {
-                console.error("Supabase-Konfigurationsfehler oder fehlende Tabellen: ", e);
-                document.getElementById('connection-status').className = "badge bg-danger";
-                document.getElementById('connection-status').innerText = "Lokaler Modus / Konfigurationsfehler";
+        async function fetchAppointments() {
+            const { data, error } = await supabase.from('appointments').select('*');
+            if (!error) appointmentsData = data || [];
+        }
+
+        async function fetchShoppingList() {
+            const { data, error } = await supabase.from('shopping_list').select('*').order('created_at', { ascending: true });
+            if (!error) {
+                shoppingData = data || [];
+                renderShoppingList();
             }
         }
 
-        // Fetch Data
-        async function loadData() {
-            const { data: appointments, error: err1 } = await supabaseClient.from('appointments').select('*');
-            if(!err1 && appointments) appointmentsData = appointments;
+        // Realtime Subscription
+        supabase.channel('public-db-changes')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, () => { fetchAppointments().then(renderCalendar); })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'shopping_list' }, () => { fetchShoppingList(); })
+            .subscribe();
 
-            const { data: shopping, error: err2 } = await supabaseClient.from('shopping_list').select('*').order('created_at', {ascending: true});
-            if(!err2 && shopping) shoppingData = shopping;
+        // Termin speichern
+        document.getElementById('appointmentForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const newApp = {
+                title: document.getElementById('title').value,
+                start_date: document.getElementById('startDate').value,
+                end_date: document.getElementById('endDate').value,
+                start_time: `${document.getElementById('startHour').value}:${document.getElementById('startMin').value}:00`,
+                end_time: `${document.getElementById('endHour').value}:${document.getElementById('endMin').value}:00`,
+                assigned_to: document.getElementById('assignedTo').value,
+                reminder: document.getElementById('reminder').value
+            };
+            const { error } = await supabase.from('appointments').insert([newApp]);
+            if(!error) document.getElementById('appointmentForm').reset();
+        });
 
-            renderAll();
+        // Einkaufsartikel hinzufügen
+        document.getElementById('shoppingForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const newItem = {
+                product: document.getElementById('product').value,
+                person: document.getElementById('shopPerson').value,
+                completed: false
+            };
+            const { error } = await supabase.from('shopping_list').insert([newItem]);
+            if(!error) document.getElementById('product').value = '';
+        });
+
+        // Artikel abhaken
+        async function toggleShoppingItem(id, currentStatus) {
+            await supabase.from('shopping_list').update({ completed: !currentStatus }).eq('id', id);
         }
 
-        // Subscriptions for Realtime updates
-        function setupRealtime() {
-            supabaseClient
-                .channel('realtime-changes')
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, () => { loadData(); })
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'shopping_list' }, () => { loadData(); })
-                .subscribe();
+        // Erledigte Einkäufe löschen
+        document.getElementById('clearCompletedBtn').addEventListener('click', async () => {
+            await supabase.from('shopping_list').delete().eq('completed', true);
+        });
+
+        // Einkaufsliste rendern
+        function renderShoppingList() {
+            const container = document.getElementById('shoppingListContainer');
+            container.innerHTML = '';
+            if (shoppingData.length === 0) {
+                container.innerHTML = '<li class="list-group-item text-muted text-center py-3">Die Einkaufsliste ist leer</li>';
+                return;
+            }
+            shoppingData.forEach(item => {
+                const li = document.createElement('li');
+                li.className = `list-group-item d-flex justify-content-between align-items-center ${item.completed ? 'list-group-item-light text-decoration-line-through text-muted' : ''}`;
+                li.style.cursor = 'pointer';
+                li.onclick = () => toggleShoppingItem(item.id, item.completed);
+                li.innerHTML = `
+                    <div>
+                        <input class="form-check-input me-2" type="checkbox" ${item.completed ? 'checked' : ''}>
+                        <span>${item.product}</span>
+                    </div>
+                    <span class="badge bg-secondary rounded-pill">${item.person}</span>
+                `;
+                container.appendChild(li);
+            });
         }
 
-        // Render Functions
-        function renderAll() {
-            updateTitle();
-            if(currentView === 'month') {
-                document.getElementById('month-view-container').classList.remove('d-none');
-                document.getElementById('week-view-container').classList.add('d-none');
-                renderMonthView();
+        // Kalender rendern
+        function renderCalendar() {
+            const grid = document.getElementById('calendarGrid');
+            const title = document.getElementById('calendarTitle');
+            grid.innerHTML = '';
+
+            const dayNames = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+            dayNames.forEach(d => {
+                const h = document.createElement('div');
+                h.className = 'calendar-header-day';
+                h.innerText = d;
+                grid.appendChild(h);
+            });
+
+            if (currentView === 'month') {
+                renderMonthView(grid, title);
             } else {
-                document.getElementById('month-view-container').classList.add('d-none');
-                document.getElementById('week-view-container').classList.remove('d-none');
-                renderWeekView();
-            }
-            renderShoppingList();
-        }
-
-        function updateTitle() {
-            const titleSpan = document.getElementById('calendar-title');
-            if(currentView === 'month') {
-                const options = { month: 'long', year: 'numeric' };
-                titleSpan.innerText = currentDate.toLocaleDateString('de-DE', options);
-            } else {
-                // Get start and end of week
-                const startOfWeek = getStartOfWeek(currentDate);
-                const endOfWeek = new Date(startOfWeek);
-                endOfWeek.setDate(endOfWeek.getDate() + 6);
-                const opt = { day: '2-digit', month: '2-digit' };
-                titleSpan.innerText = `KW ${getWeekNumber(currentDate)} (${startOfWeek.toLocaleDateString('de-DE', opt)} - ${endOfWeek.toLocaleDateString('de-DE', opt)})`;
+                renderWeekView(grid, title);
             }
         }
 
-        function getStartOfWeek(date) {
-            const d = new Date(date);
-            const day = d.getDay();
-            const diff = d.getDate() - day + (day == 0 ? -6 : 1); // Adjust for Monday-start week
-            return new Date(d.setDate(diff));
+        function renderMonthView(grid, title) {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            title.innerText = currentDate.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
+
+            const firstDayIndex = (new Date(year, month, 1).getDay() + 6) % 7;
+            const totalDays = new Date(year, month + 1, 0).getDate();
+            const prevTotalDays = new Date(year, month, 0).getDate();
+
+            // Tage des Vormonats auffüllen
+            for (let i = firstDayIndex; i > 0; i--) {
+                createDayCell(grid, prevTotalDays - i + 1, true, new Date(year, month - 1, prevTotalDays - i + 1));
+            }
+            // Tage des aktuellen Monats
+            for (let i = 1; i <= totalDays; i++) {
+                const d = new Date(year, month, i);
+                const isToday = d.toDateString() === new Date().toDateString();
+                createDayCell(grid, i, false, d, isToday);
+            }
+            // Tage des Folgemonats auffüllen für stabiles 6-Wochen-Raster
+            const remainingCells = 42 - (firstDayIndex + totalDays);
+            for (let i = 1; i <= remainingCells; i++) {
+                createDayCell(grid, i, true, new Date(year, month + 1, i));
+            }
+        }
+
+        function renderWeekView(grid, title) {
+            const currentDay = currentDate.getDay();
+            const distanceToMonday = (currentDay + 6) % 7;
+            const monday = new Date(currentDate);
+            monday.setDate(currentDate.getDate() - distanceToMonday);
+
+            const sunday = new Date(monday);
+            sunday.setDate(monday.getDate() + 6);
+
+            title.innerText = `KW ${getWeekNumber(monday)} (${monday.getDate()}. - ${sunday.getDate()}. ${monday.toLocaleDateString('de-DE', { month: 'short' })})`;
+
+            for (let i = 0; i < 7; i++) {
+                const d = new Date(monday);
+                d.setDate(monday.getDate() + i);
+                const isToday = d.toDateString() === new Date().toDateString();
+                createDayCell(grid, d.getDate(), false, d, isToday, true);
+            }
+        }
+
+        function createDayCell(grid, num, isOtherMonth, dateObj, isToday = false, isWeekView = false) {
+            const cell = document.createElement('div');
+            cell.className = `calendar-day ${isOtherMonth ? 'other-month' : ''} ${isToday ? 'today' : ''}`;
+            if(isWeekView) cell.style.minHeight = '250px';
+
+            const span = document.createElement('span');
+            span.className = 'calendar-day-num';
+            span.innerText = num;
+            cell.appendChild(span);
+
+            // Termine für diesen Tag matchen
+            const dateStr = dateObj.toISOString().split('T')[0];
+            const dayApps = appointmentsData.filter(app => dateStr >= app.start_date && dateStr <= app.end_date);
+
+            dayApps.forEach(app => {
+                const badge = document.createElement('div');
+                const personClass = app.assigned_to ? 'event-' + app.assigned_to.replace(' ', '-') : '';
+                badge.className = `event-badge ${personClass}`;
+                
+                let timeStr = '';
+                if(app.start_time) {
+                    timeStr = app.start_time.substring(0, 5) + ' ';
+                }
+                badge.innerText = `${timeStr}${app.title}`;
+                badge.title = `${app.title} (${app.assigned_to || 'Alle'}) ${app.start_time ? '\nZeit: ' + app.start_time.substring(0,5) + ' - ' + app.end_time.substring(0,5) : ''} ${app.reminder !== 'Keine' ? '\nErinnerung aktiv' : ''}`;
+                cell.appendChild(badge);
+            });
+
+            grid.appendChild(cell);
         }
 
         function getWeekNumber(d) {
             d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
             d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
             var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
-            var weekNo = Math.ceil(( ( (d - yearStart) / 86400000) + 1)/7);
-            return weekNo;
+            return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
         }
 
-        function getPersonClass(person) {
-            if(!person) return 'badge-all';
-            const p = person.toLowerCase().replace(/\s/g, '');
-            if(p.includes('josefb')) return 'badge-josefb';
-            if(p.includes('heidi')) return 'badge-heidi';
-            if(p.includes('josefr')) return 'badge-josefr';
-            if(p.includes('markus')) return 'badge-markus';
-            return 'badge-all';
-        }
-
-        function renderMonthView() {
-            const grid = document.getElementById('month-grid-days');
-            grid.innerHTML = '';
-            
-            const year = currentDate.getFullYear();
-            const month = currentDate.getMonth();
-            
-            const firstDayOfMonth = new Date(year, month, 1);
-            // Day of week mapping for Mon=0, Tue=1 ... Sun=6
-            let startDayOffset = firstDayOfMonth.getDay() - 1;
-            if(startDayOffset === -1) startDayOffset = 6;
-            
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
-            const prevMonthDays = new Date(year, month, 0).getDate();
-            
-            // Render trailing days from previous month
-            for(let i = startDayOffset - 1; i >= 0; i--) {
-                const dayDiv = document.createElement('div');
-                dayDiv.className = 'calendar-day other-month';
-                dayDiv.innerHTML = `<span class="day-number">${prevMonthDays - i}</span>`;
-                grid.appendChild(dayDiv);
-            }
-            
-            // Render active month days
-            const today = new Date();
-            for(let day = 1; day <= daysInMonth; day++) {
-                const dayDiv = document.createElement('div');
-                dayDiv.className = 'calendar-day';
-                
-                if(day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
-                    dayDiv.classList.add('today');
-                }
-                
-                dayDiv.innerHTML = `<span class="day-number">${day}</span>`;
-                
-                // Filter appointments for this date
-                const thisDateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-                const dailyApps = appointmentsData.filter(app => {
-                    return thisDateStr >= app.start_date && thisDateStr <= (app.end_date || app.start_date);
-                });
-                
-                dailyApps.forEach(app => {
-                    const badge = document.createElement('div');
-                    badge.className = `event-badge ${getPersonClass(app.assigned_to)}`;
-                    badge.title = `${app.title} (${app.start_time || ''})`;
-                    badge.innerText = `${app.start_time ? app.start_time.substring(0,5) + ' ' : ''}${app.title}`;
-                    dayDiv.appendChild(badge);
-                });
-                
-                grid.appendChild(dayDiv);
-            }
-        }
-
-        function renderWeekView() {
-            const container = document.getElementById('week-list-days');
-            container.innerHTML = '';
-            
-            const startOfWeek = getStartOfWeek(currentDate);
-            const weekdayNames = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
-            
-            for(let i=0; i<7; i++) {
-                const dayDate = new Date(startOfWeek);
-                dayDate.setDate(startOfWeek.getDate() + i);
-                const dateStr = dayDate.toISOString().split('T')[0];
-                
-                const dayDiv = document.createElement('div');
-                dayDiv.className = 'week-list-day';
-                
-                const todayStr = new Date().toISOString().split('T')[0];
-                const activeHeaderClass = dateStr === todayStr ? 'text-success fw-bold' : 'text-dark';
-                
-                dayDiv.innerHTML = `<h5 class="${activeHeaderClass}">${weekdayNames[i]}, ${dayDate.toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit', year:'numeric'})}</h5>`;
-                
-                const dailyApps = appointmentsData.filter(app => {
-                    return dateStr >= app.start_date && dateStr <= (app.end_date || app.start_date);
-                });
-                
-                if(dailyApps.length === 0) {
-                    dayDiv.innerHTML += `<p class="text-muted small">Keine Termine eingetragen</p>`;
-                } else {
-                    const listGroup = document.createElement('div');
-                    listGroup.className = 'list-group list-group-flush mb-2';
-                    
-                    dailyApps.forEach(app => {
-                        let timeStr = "Ganztägig";
-                        if(app.start_time) {
-                            timeStr = app.start_time.substring(0,5);
-                            if(app.end_time) timeStr += ` - ${app.end_time.substring(0,5)}`;
-                        }
-                        
-                        let remText = "";
-                        if(app.reminder && app.reminder !== 'none') {
-                            if(app.reminder === '0') remText = " (Erinnerung: Pünktlich)";
-                            else if(app.reminder === '15') remText = " (Erinnerung: 15 Min)";
-                            else if(app.reminder === '30') remText = " (Erinnerung: 30 Min)";
-                            else if(app.reminder === '60') remText = " (Erinnerung: 1 Std)";
-                            else if(app.reminder === '1440') remText = " (Erinnerung: 1 Tag)";
-                        }
-                        
-                        listGroup.innerHTML += `
-                            <div class="list-group-item d-flex justify-content-between align-items-center py-2 px-1">
-                                <div>
-                                    <strong class="text-primary">${timeStr}</strong>: ${app.title} <span class="text-muted small">${remText}</span>
-                                </div>
-                                <span class="badge ${getPersonClass(app.assigned_to)}">${app.assigned_to || 'Alle'}</span>
-                            </div>
-                        `;
-                    });
-                    dayDiv.appendChild(listGroup);
-                }
-                container.appendChild(dayDiv);
-            }
-        }
-
-        function renderShoppingList() {
-            const ul = document.getElementById('shopping-list-ul');
-            ul.innerHTML = '';
-            
-            if(shoppingData.length === 0) {
-                ul.innerHTML = '<li class="list-group-item text-muted text-center small">Die Einkaufsliste ist leer</li>';
-                return;
-            }
-            
-            shoppingData.forEach(item => {
-                const li = document.createElement('li');
-                li.className = `list-group-item d-flex justify-content-between align-items-center ${item.completed ? 'list-group-item-light text-decoration-line-through text-muted' : ''}`;
-                
-                const checkedAttr = item.completed ? 'checked' : '';
-                const dateBadge = item.date_target ? `<span class="badge bg-light text-dark border me-1">${item.date_target.substring(5)}</span>` : '';
-                
-                li.innerHTML = `
-                    <div class="form-check m-0">
-                        <input class="form-check-input update-shop-status" type="checkbox" data-id="${item.id}" ${checkedAttr} id="shop-${item.id}">
-                        <label class="form-check-label" for="shop-${item.id}">
-                            ${dateBadge} <strong>${item.product}</strong> <span class="text-muted small">(${item.person || 'Alle'})</span>
-                        </label>
-                    </div>
-                    <button class="btn btn-sm btn-link text-danger p-0 delete-shop-item" data-id="${item.id}"><i class="bi bi-trash"></i></button>
-                `;
-                ul.appendChild(li);
-            });
-
-            // Bind checklist toggles
-            document.querySelectorAll('.update-shop-status').forEach(cb => {
-                cb.addEventListener('change', async (e) => {
-                    const id = e.target.getAttribute('data-id');
-                    const isChecked = e.target.checked;
-                    await supabaseClient.from('shopping_list').update({ completed: isChecked }).eq('id', id);
-                    loadData();
-                });
-            });
-
-            // Bind single item deletes
-            document.querySelectorAll('.delete-shop-item').forEach(btn => {
-                btn.addEventListener('click', async (e) => {
-                    const id = e.currentTarget.getAttribute('data-id');
-                    await supabaseClient.from('shopping_list').delete().eq('id', id);
-                    loadData();
-                });
-            });
-        }
-
-        // Event Listeners Forms
-        document.getElementById('appointment-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const newApp = {
-                title: document.getElementById('title').value,
-                start_date: document.getElementById('start-date').value,
-                end_date: document.getElementById('end-date').value,
-                start_time: `${document.getElementById('start-hour').value}:${document.getElementById('start-minute').value}:00`,
-                end_time: `${document.getElementById('end-hour').value}:${document.getElementById('end-minute').value}:00`,
-                assigned_to: document.getElementById('assigned-to').value,
-                reminder: document.getElementById('reminder').value
-            };
-            
-            const { error } = await supabaseClient.from('appointments').insert([newApp]);
-            if(error) {
-                alert("Fehler beim Speichern: " + error.message);
-            } else {
-                document.getElementById('title').value = '';
-                loadData();
-            }
+        // Navigation & Event Listener
+        document.getElementById('viewMonthBtn').addEventListener('click', () => { currentView = 'month'; renderCalendar(); });
+        document.getElementById('viewWeekBtn').addEventListener('click', () => { currentView = 'week'; renderCalendar(); });
+        document.getElementById('todayBtn').addEventListener('click', () => { currentDate = new Date(); renderCalendar(); });
+        
+        document.getElementById('prevBtn').addEventListener('click', () => {
+            if (currentView === 'month') currentDate.setMonth(currentDate.getMonth() - 1);
+            else currentDate.setDate(currentDate.getDate() - 7);
+            renderCalendar();
+        });
+        
+        document.getElementById('nextBtn').addEventListener('click', () => {
+            if (currentView === 'month') currentDate.setMonth(currentDate.getMonth() + 1);
+            else currentDate.setDate(currentDate.getDate() + 7);
+            renderCalendar();
         });
 
-        document.getElementById('shopping-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const newShop = {
-                product: document.getElementById('shop-product').value,
-                date_target: document.getElementById('shop-date').value || null,
-                person: document.getElementById('shop-person').value,
-                completed: false
-            };
+        // App-Initialisierung
+        window.addEventListener('DOMContentLoaded', () => {
+            // Heutiges Datum als Standard setzen
+            const todayStr = new Date().toISOString().split('T')[0];
+            document.getElementById('startDate').value = todayStr;
+            document.getElementById('endDate').value = todayStr;
             
-            const { error } = await supabaseClient.from('shopping_list').insert([newShop]);
-            if(error) {
-                alert("Fehler beim Hinzufügen: " + error.message);
-            } else {
-                document.getElementById('shop-product').value = '';
-                document.getElementById('shop-date').value = '';
-                loadData();
-            }
+            initTimeDropdowns();
+            loadAllData();
         });
 
-        document.getElementById('delete-completed-shopping').addEventListener('click', async () => {
-            if(confirm("Alle erledigten Einkäufe unwiderruflich löschen?")) {
-                await supabaseClient.from('shopping_list').delete().eq('completed', true);
-                loadData();
-            }
-        });
-
-        // Navigation & Views
-        document.getElementById('btn-prev').addEventListener('click', () => {
-            if(currentView === 'month') {
-                currentDate.setMonth(currentDate.getMonth() - 1);
-            } else {
-                currentDate.setDate(currentDate.getDate() - 7);
-            }
-            renderAll();
-        });
-
-        document.getElementById('btn-next').addEventListener('click', () => {
-            if(currentView === 'month') {
-                currentDate.setMonth(currentDate.getMonth() + 1);
-            } else {
-                currentDate.setDate(currentDate.getDate() + 7);
-            }
-            renderAll();
-        });
-
-        document.getElementById('view-month').addEventListener('click', (e) => {
-            currentView = 'month';
-            document.getElementById('view-month').classList.add('active');
-            document.getElementById('view-week').classList.remove('active');
-            renderAll();
-        });
-
-        document.getElementById('view-week').addEventListener('click', (e) => {
-            currentView = 'week';
-            document.getElementById('view-week').classList.add('active');
-            document.getElementById('view-month').classList.remove('active');
-            renderAll();
-        });
-
-        // PWA Setup
+        // Service Worker Registrierung
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js')
-            .then(() => console.log('Service Worker registriert'))
-            .catch(err => console.error('Service Worker Fehler', err));
+            navigator.serviceWorker.register('sw.js');
         }
-
-        // Init
-        checkConnection();
-        loadData();
-        setupRealtime();
     </script>
 </body>
 </html>

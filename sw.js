@@ -33,6 +33,7 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
 
+  // Supabase Live-Anfragen vom Caching komplett ausschließen
   if (url.hostname.includes('supabase.co')) {
     return;
   }
