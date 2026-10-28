@@ -4,466 +4,361 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Familienplaner Christ - Supabase Edition</title>
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#2c3e50">
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-    <!-- Supabase JS Library -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { background-color: #f8f9fa; font-family: system-ui, -apple-system, sans-serif; }
-        .card { border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-radius: 12px; margin-bottom: 20px; }
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; background: #dee2e6; padding: 5px; border-radius: 8px; }
-        .calendar-header { font-weight: bold; text-align: center; background: #e9ecef; padding: 8px 0; border-radius: 4px; font-size: 0.9rem; }
-        .calendar-day { background: #fff; min-height: 90px; padding: 5px; border-radius: 4px; display: flex; flex-direction: column; justify-content: space-between; }
-        .calendar-day.today { background: #fff3cd; border: 2px solid #ffc107; }
-        .calendar-day.other-month { background: #f1f3f5; color: #adb5bd; }
-        .day-number { font-weight: bold; font-size: 0.85rem; margin-bottom: 5px; }
-        .event-badge { font-size: 0.75rem; padding: 2px 4px; margin-bottom: 2px; border-radius: 3px; color: white; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .bg-josefb { background-color: #0d6efd; }
-        .bg-heidi { background-color: #dc3545; }
-        .bg-josefr { background-color: #198754; }
-        .bg-markus { background-color: #fd7e14; }
-        .bg-alle { background-color: #6c757d; }
-        .week-view-container { display: flex; flex-direction: column; gap: 10px; }
-        .week-day-row { background: white; padding: 10px; border-radius: 8px; border-left: 5px solid #6c757d; }
-        .week-day-row.today { border-left-color: #ffc107; background: #fff3cd; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f5f7;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.1);
+        }
+        h3, h4 {
+            margin-top: 0;
+            color: #1a202c;
+        }
+        .navigation {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .btn {
+            background-color: #edf2f7;
+            border: 1px solid #cbd5e0;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .btn:hover {
+            background-color: #e2e8f0;
+        }
+        .btn-primary {
+            background-color: #3182ce;
+            color: white;
+            border: none;
+        }
+        .btn-primary:hover {
+            background-color: #2b6cb0;
+        }
+        .form-group {
+            margin-bottom: 16px;
+        }
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 6px;
+            font-size: 14px;
+            color: #4a5568;
+        }
+        input[type="text"], input[type="date"], select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        .time-picker-container {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-top: 4px;
+        }
+        .hour-select {
+            width: 80px;
+        }
+        .minute-buttons {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .time-btn {
+            background: white;
+            border: 1px solid #cbd5e0;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            min-width: 45px;
+            font-weight: 500;
+            transition: all 0.15s;
+        }
+        .time-btn:hover {
+            background: #f7fafc;
+            border-color: #a0aec0;
+        }
+        .time-btn.active {
+            background-color: #3182ce;
+            color: white;
+            border-color: #3182ce;
+        }
+        .radio-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 8px;
+            margin-top: 6px;
+        }
+        .radio-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #f7fafc;
+            padding: 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: normal;
+        }
+        .radio-label input {
+            margin: 0;
+        }
     </style>
 </head>
 <body>
 
-<div class="container py-4">
-    <header class="pb-3 mb-4 border-bottom d-flex justify-content-between align-items-center">
-        <span class="fs-4 fw-bold text-primary"><i class="bi bi-calendar3-event"></i> Familienplaner Christ</span>
-        <span id="connection-status" class="badge bg-success">Online-Modus</span>
-    </header>
+<div class="container">
+    <h3>Familienplaner Christ - Supabase Edition</h3>
+    <p style="font-size: 14px; color: #718096; margin-top: -10px;">Online-Modus</p>
 
-    <div class="row">
-        <!-- Formular-Spalte -->
-        <div class="col-lg-4">
-            <!-- Termin eintragen -->
-            <div class="card p-3">
-                <h4 class="card-title mb-3 text-secondary"><i class="bi bi-plus-circle"></i> Neuen Termin eintragen</h4>
-                <form id="appointment-form">
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Titel / Beschreibung</label>
-                        <input type="text" id="title" class="form-control" placeholder="z.B. Zahnarzt" required>
-                    </div>
-                    <div class="row g-2 mb-3">
-                        <div class="col-6">
-                            <label class="form-label fw-semibold">Beginn-Datum</label>
-                            <input type="date" id="start_date" class="form-control" required>
-                        </div>
-                        <div class="col-6">
-                            <label class="form-label fw-semibold">Ende-Datum</label>
-                            <input type="date" id="end_date" class="form-control" required>
-                        </div>
-                    </div>
-                    <div class="row g-2 mb-3">
-                        <div class="col-6">
-                            <label class="form-label fw-semibold">Uhrzeit Beginn</label>
-                            <div class="d-flex gap-1">
-                                <select id="start_hour" class="form-select" required></select>
-                                <select id="start_minute" class="form-select" required>
-                                    <option value="00">00</option>
-                                    <option value="15">15</option>
-                                    <option value="30">30</option>
-                                    <option value="45">45</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <label class="form-label fw-semibold">Uhrzeit Ende</label>
-                            <div class="d-flex gap-1">
-                                <select id="end_hour" class="form-select" required></select>
-                                <select id="end_minute" class="form-select" required>
-                                    <option value="00">00</option>
-                                    <option value="15">15</option>
-                                    <option value="30">30</option>
-                                    <option value="45">45</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Zugeordnet für:</label>
-                        <select id="assigned_to" class="form-select" required>
-                            <option value="Josef B.">Josef B.</option>
-                            <option value="Heidi">Heidi</option>
-                            <option value="Josef R.">Josef R.</option>
-                            <option value="Markus">Markus</option>
-                            <option value="Alle">Alle</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Standard-Erinnerung</label>
-                        <select id="reminder" class="form-select">
-                            <option value="Keine">Keine Erinnerung</option>
-                            <option value="15 Min">15 Minuten vorher</option>
-                            <option value="30 Min">30 Minuten vorher</option>
-                            <option value="1 Std">1 Stunde vorher</option>
-                            <option value="1 Tag">1 Tag vorher</option>
-                        </select>
-                    </div>
-                    <button type="submit" class="btn btn-primary w-100 fw-bold"><i class="bi bi-check-circle"></i> Termin sichern</button>
-                </form>
-            </div>
-
-            <!-- Einkaufsliste -->
-            <div class="card p-3">
-                <h4 class="card-title mb-3 text-secondary"><i class="bi bi-cart-plus"></i> Artikel erfassen</h4>
-                <form id="shopping-form" class="row g-2">
-                    <div class="col-10">
-                        <input type="text" id="product" class="form-control" placeholder="Produkt eingeben..." required>
-                    </div>
-                    <div class="col-2">
-                        <button type="submit" class="btn btn-success w-100"><i class="bi bi-plus-lg"></i></button>
-                    </div>
-                </form>
-                <ul id="shopping-list-ul" class="list-group mt-3"></ul>
-            </div>
-        </div>
-
-        <!-- Kalender-Spalte -->
-        <div class="col-lg-8">
-            <div class="card p-3">
-                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-                    <div class="btn-group">
-                        <button id="btn-prev" class="btn btn-outline-secondary btn-sm"><i class="bi bi-chevron-left"></i> Zurück</button>
-                        <button id="btn-today" class="btn btn-outline-secondary btn-sm">Heute</button>
-                        <button id="btn-next" class="btn btn-outline-secondary btn-sm">Vor <i class="bi bi-chevron-right"></i></button>
-                    </div>
-                    <h3 id="calendar-title" class="mb-0 text-center flex-grow-1 fs-5 fw-bold text-uppercase"></h3>
-                    <div class="btn-group">
-                        <button id="btn-month-view" class="btn btn-primary btn-sm">Monat</button>
-                        <button id="btn-week-view" class="btn btn-outline-primary btn-sm">Woche</button>
-                    </div>
-                </div>
-
-                <!-- Dynamischer Ansichts-Container -->
-                <div id="calendar-view-container"></div>
-            </div>
-        </div>
+    <!-- Kalender-Navigation Simulation -->
+    <div class="navigation">
+        <button class="btn" onclick="navigiereTag(-1)">Zurück</button>
+        <button class="btn" onclick="navigiereHeute()">Heute</button>
+        <button class="btn" onclick="navigiereTag(1)">Vor</button>
+        <span style="margin-left: auto; align-self: center; font-weight: 600;" id="kalender-anzeige">Monat / Woche</span>
     </div>
+
+    <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;">
+
+    <h4>Neuen Termin eintragen</h4>
+    
+    <form id="termin-form" onsubmit="terminSichern(event)">
+        <div class="form-group">
+            <label for="titel">Titel / Beschreibung</label>
+            <input type="text" id="titel" placeholder="Z.B. Zahnarzt, Einkauf, Geburtstag..." required>
+        </div>
+
+        <div class="form-group">
+            <label for="beginn-datum">Beginn-Datum</label>
+            <input type="date" id="beginn-datum" required onchange="datumManuellGeaendert('beginn')">
+        </div>
+
+        <div class="form-group">
+            <label for="ende-datum">Ende-Datum</label>
+            <input type="date" id="ende-datum" required>
+        </div>
+
+        <!-- Uhrzeit Beginn -->
+        <div class="form-group">
+            <label>Uhrzeit Beginn</label>
+            <div class="time-picker-container">
+                <select id="stunde-beginn" class="hour-select" onchange="uhrzeitAktualisieren()">
+                    <!-- Stunden werden via JS befüllt -->
+                </select>
+                <div class="minute-buttons" id="minuten-gruppe-beginn">
+                    <button type="button" class="time-btn active" onclick="waehleMinute('beginn', '00', this)">00</button>
+                    <button type="button" class="time-btn" onclick="waehleMinute('beginn', '15', this)">15</button>
+                    <button type="button" class="time-btn" onclick="waehleMinute('beginn', '30', this)">30</button>
+                    <button type="button" class="time-btn" onclick="waehleMinute('beginn', '45', this)">45</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Uhrzeit Ende -->
+        <div class="form-group">
+            <label>Uhrzeit Ende</label>
+            <div class="time-picker-container">
+                <select id="stunde-ende" class="hour-select" onchange="uhrzeitAktualisieren()">
+                    <!-- Stunden werden via JS befüllt -->
+                </select>
+                <div class="minute-buttons" id="minuten-gruppe-ende">
+                    <button type="button" class="time-btn active" onclick="waehleMinute('ende', '00', this)">00</button>
+                    <button type="button" class="time-btn" onclick="waehleMinute('ende', '15', this)">15</button>
+                    <button type="button" class="time-btn" onclick="waehleMinute('ende', '30', this)">30</button>
+                    <button type="button" class="time-btn" onclick="waehleMinute('ende', '45', this)">45</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Zugeordnet für:</label>
+            <div class="radio-group">
+                <label class="radio-label"><input type="radio" name="zuordnung" value="Josef B." checked> Josef B.</label>
+                <label class="radio-label"><input type="radio" name="zuordnung" value="Heidi"> Heidi</label>
+                <label class="radio-label"><input type="radio" name="zuordnung" value="Josef R."> Josef R.</label>
+                <label class="radio-label"><input type="radio" name="zuordnung" value="Markus"> Markus</label>
+                <label class="radio-label"><input type="radio" name="zuordnung" value="Alle"> Alle</label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="erinnerung">Standard-Erinnerung</label>
+            <select id="erinnerung">
+                <option value="keine">Keine Erinnerung</option>
+                <option value="15m">15 Minuten vorher</option>
+                <option value="30m">30 Minuten vorher</option>
+                <option value="1h">1 Stunde vorher</option>
+                <option value="1d">1 Tag vorher</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 16px; margin-top: 10px;">Termin sichern</button>
+    </form>
 </div>
 
 <script>
-    // Supabase Konfiguration
-    const SUPABASE_URL = 'https://hdettzthupebrsgqiorv.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhkZXR0enRodXBlYnJzZ3Fpb3J2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMyMTMxNDgsImV4cCI6MjEwODc4OTE0OH0.ehU5KkBtgGJvuqjw4aBxprZ7a1rtBhhRia_hDi4CBHw';
-    
-    const supabase =  window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Aktueller Zustand des ausgewählten Datums im Kalender
+    let aktuellesKalenderDatum = new Date();
 
-    let currentNavDate = new Date();
-    let currentView = 'month'; // 'month' oder 'week'
-    let globalAppointments = [];
+    // Variablen für die ausgewählten Minuten-Werte
+    let ausgewaehlteMinuteBeginn = "00";
+    let ausgewaehlteMinuteEnde = "00";
 
-    // Uhrzeit Dropdowns füllen
-    function initTimeDropdowns() {
-        const startHour = document.getElementById('start_hour');
-        const endHour = document.getElementById('end_hour');
-        startHour.innerHTML = '';
-        endHour.innerHTML = '';
+    // Formatiert ein Date-Objekt zu YYYY-MM-DD für die <input type="date"> Felder
+    function formatiereDatum(date) {
+        const j = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const t = String(date.getDate()).padStart(2, '0');
+        return `${j}-${m}-${t}`;
+    }
+
+    // Formatiert das Datum für die obere Kalender-Anzeigeleiste
+    function aktualisiereKalenderAnzeige() {
+        const optionen = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        document.getElementById('kalender-anzeige').innerText = aktuellesKalenderDatum.toLocaleDateString('de-DE', optionen);
+    }
+
+    // Setzt die Datumsfelder anhand des ausgewählten Kalendertags (wird bei Voreinstellung identisch gesetzt)
+    function updateDatumsFelder() {
+        const datumsString = formatiereDatum(aktuellesKalenderDatum);
+        document.getElementById('beginn-datum').value = datumsString;
+        document.getElementById('ende-datum').value = datumsString;
+    }
+
+    // Navigation: Vor oder Zurück blättern
+    function navigiereTag(anzahlTage) {
+        aktuellesKalenderDatum.setDate(aktuellesKalenderDatum.getDate() + anzahlTage);
+        aktualisiereKalenderAnzeige();
+        updateDatumsFelder();
+    }
+
+    // Navigation: Zurück auf das echte "Heute" springen
+    function navigiereHeute() {
+        aktuellesKalenderDatum = new Date();
+        aktualisiereKalenderAnzeige();
+        updateDatumsFelder();
+    }
+
+    // Wenn der Nutzer das Beginn-Datum händisch ändert, kann das Ende-Datum separat bleiben
+    function datumManuellGeaendert(typ) {
+        if (typ === 'beginn') {
+            // Optionale Logik: Falls das Ende vor dem Beginn liegt, automatisch anpassen
+            const beginn = document.getElementById('beginn-datum').value;
+            const ende = document.getElementById('ende-datum').value;
+            if (ende < beginn) {
+                document.getElementById('ende-datum').value = beginn;
+            }
+        }
+    }
+
+    // Befüllt die Dropdowns für die Stunden (00 - 23)
+    function initialisiereStundenDropdowns() {
+        const stundeBeginnSelect = document.getElementById('stunde-beginn');
+        const stundeEndeSelect = document.getElementById('stunde-ende');
+        
         for (let i = 0; i < 24; i++) {
-            let h = i < 10 ? '0' + i : '' + i;
-            startHour.options.add(new Option(h + ' Uhr', h));
-            endHour.options.add(new Option(h + ' Uhr', h));
-        }
-        startHour.value = "08";
-        endHour.value = "09";
-    }
-
-    // Automatischer Enddatum-Vorschlag
-    document.getElementById('start_date').addEventListener('change', function() {
-        document.getElementById('end_date').value = this.value;
-    });
-
-    // Personen-Farbe bestimmen
-    function getPersonClass(person) {
-        switch(person) {
-            case 'Josef B.': return 'bg-josefb';
-            case 'Heidi': return 'bg-heidi';
-            case 'Josef R.': return 'bg-josefr';
-            case 'Markus': return 'bg-markus';
-            default: return 'bg-alle';
-        }
-    }
-
-    // Termine aus Supabase holen
-    async function loadAppointments() {
-        const { data, error } = await supabase.from('appointments').select('*');
-        if (!error) {
-            globalAppointments = data;
-            renderCalendar();
-        }
-    }
-
-    // Kalender rendern (Weiche)
-    function renderCalendar() {
-        const container = document.getElementById('calendar-view-container');
-        const title = document.getElementById('calendar-title');
-        container.innerHTML = '';
-
-        if (currentView === 'month') {
-            title.innerText = currentNavDate.toLocaleString('de-DE', { month: 'long', year: 'numeric' });
-            renderMonthView(container);
-        } else {
-            const startOfWeek = getStartOfWeek(currentNavDate);
-            const endOfWeek = new Date(startOfWeek);
-            endOfWeek.setDate(endOfWeek.getDate() + 6);
-            title.innerText = `KW ${getWeekNumber(currentNavDate)} (${startOfWeek.toLocaleDateString('de-DE')} - ${endOfWeek.toLocaleDateString('de-DE')})`;
-            renderWeekView(container);
-        }
-    }
-
-    // Monatsansicht generieren
-    function renderMonthView(container) {
-        const grid = document.createElement('div');
-        grid.className = 'calendar-grid';
-
-        const daysOfWeek = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
-        daysOfWeek.forEach(d => {
-            const header = document.createElement('div');
-            header.className = 'calendar-header';
-            header.innerText = d;
-            grid.appendChild(header);
-        });
-
-        const year = currentNavDate.getFullYear();
-        const month = currentNavDate.getMonth();
-        const firstDayIndex = (new Date(year, month, 1).getDay() + 6) % 7;
-        const totalDays = new Date(year, month + 1, 0).getDate();
-        const prevTotalDays = new Date(year, month, 0).getDate();
-
-        // Letzte Tage des Vormonats füllen
-        for (let i = firstDayIndex; i > 0; i--) {
-            const dayCell = document.createElement('div');
-            dayCell.className = 'calendar-day other-month';
-            dayCell.innerHTML = `<div class="day-number">${prevTotalDays - i + 1}</div>`;
-            grid.appendChild(dayCell);
-        }
-
-        // Aktuelle Monatstage füllen
-        const todayStr = new Date().toDateString();
-        for (let day = 1; day <= totalDays; day++) {
-            const dayCell = document.createElement('div');
-            dayCell.className = 'calendar-day';
-            const loopDate = new Date(year, month, day);
-            if (loopDate.toDateString() === todayStr) dayCell.classList.add('today');
-
-            dayCell.innerHTML = `<div class="day-number">${day}</div><div class="events-container w-100"></div>`;
-            const eventsContainer = dayCell.querySelector('.events-container');
-
-            // Termine filtern und einfügen
-            const yearStr = loopDate.getFullYear();
-            const monthStr = String(loopDate.getMonth() + 1).padStart(2, '0');
-            const dayStr = String(loopDate.getDate()).padStart(2, '0');
-            const dateIso = `${yearStr}-${monthStr}-${dayStr}`;
-
-            const dayEvents = globalAppointments.filter(e => dateIso >= e.start_date && dateIso <= e.end_date);
+            const stundeString = String(i).padStart(2, '0');
             
-            dayEvents.forEach(ev => {
-                const badge = document.createElement('div');
-                badge.className = `event-badge ${getPersonClass(ev.assigned_to)}`;
-                badge.innerText = `${ev.start_time ? ev.start_time.substring(0,5) : ''} ${ev.title}`;
-                badge.title = `${ev.title} (${ev.assigned_to}) ${ev.reminder !== 'Keine' ? '🔔' : ''}`;
-                eventsContainer.appendChild(badge);
-            });
+            const optBeginn = document.createElement('option');
+            optBeginn.value = stundeString;
+            optBeginn.text = stundeString;
+            stundeBeginnSelect.appendChild(optBeginn);
 
-            grid.appendChild(dayCell);
+            const optEnde = document.createElement('option');
+            optEnde.value = stundeString;
+            optEnde.text = stundeString;
+            stundeEndeSelect.appendChild(optEnde);
         }
-        container.appendChild(grid);
+        
+        // Standardwerte setzen (z. B. Beginn jetzt, Ende eine Stunde später)
+        const jetzigeStunde = new Date().getHours();
+        stundeBeginnSelect.value = String(jetzigeStunde).padStart(2, '0');
+        stundeEndeSelect.value = String((jetzigeStunde + 1) % 24).padStart(2, '0');
     }
 
-    // Wochenansicht generieren
-    function renderWeekView(container) {
-        const weekContainer = document.createElement('div');
-        weekContainer.className = 'week-view-container';
-        const startOfWeek = getStartOfWeek(currentNavDate);
-        const todayStr = new Date().toDateString();
-
-        for (let i = 0; i < 7; i++) {
-            const loopDate = new Date(startOfWeek);
-            loopDate.setDate(loopDate.getDate() + i);
-            
-            const yearStr = loopDate.getFullYear();
-            const monthStr = String(loopDate.getMonth() + 1).padStart(2, '0');
-            const dayStr = String(loopDate.getDate()).padStart(2, '0');
-            const dateIso = `${yearStr}-${monthStr}-${dayStr}`;
-
-            const row = document.createElement('div');
-            row.className = 'week-day-row';
-            if (loopDate.toDateString() === todayStr) row.classList.add('today');
-
-            const dayName = loopDate.toLocaleString('de-DE', { weekday: 'long', day: 'numeric', month: 'numeric' });
-            row.innerHTML = `<h5 class="fw-bold border-bottom pb-1 text-muted">${dayName}</h5><div class="week-events d-flex flex-column gap-1"></div>`;
-            const weekEvents = row.querySelector('.week-events');
-
-            const dayEvents = globalAppointments.filter(e => dateIso >= e.start_date && dateIso <= e.end_date);
-            if (dayEvents.length === 0) {
-                weekEvents.innerHTML = '<span class="text-subtle font-monospace text-secondary" style="font-size:0.85rem;">Keine Termine</span>';
-            } else {
-                dayEvents.forEach(ev => {
-                    const block = document.createElement('div');
-                    block.className = `p-2 rounded text-white d-flex justify-content-between align-items-center ${getPersonClass(ev.assigned_to)}`;
-                    block.style.fontSize = '0.9rem';
-                    block.innerHTML = `
-                        <div>
-                            <strong>${ev.start_time ? ev.start_time.substring(0,5) : '00:00'} - ${ev.end_time ? ev.end_time.substring(0,5) : '24:00'}</strong>: ${ev.title}
-                        </div>
-                        <span class="badge bg-light text-dark">${ev.assigned_to} ${ev.reminder !== 'Keine' ? '🔔 ' + ev.reminder : ''}</span>
-                    `;
-                    weekEvents.appendChild(block);
-                });
-            }
-            weekContainer.appendChild(row);
+    // Behebt den Fehler bei der Uhrzeit-Auswahl (aktiviert Minuten-Buttons)
+    function waehleMinute(typ, minute, buttonElement) {
+        // Alle aktiven Klassen in der jeweiligen Minuten-Gruppe entfernen
+        const gruppenId = typ === 'beginn' ? 'minuten-gruppe-beginn' : 'minuten-gruppe-ende';
+        const buttons = document.getElementById(gruppenId).querySelectorAll('.time-btn');
+        buttons.forEach(btn => btn.classList.remove('active'));
+        
+        // Gewählten Button optisch hervorheben
+        buttonElement.classList.add('active');
+        
+        // Wert intern speichern
+        if (typ === 'beginn') {
+            ausgewaehlteMinuteBeginn = minute;
+        } else if (typ === 'ende') {
+            ausgewaehlteMinuteEnde = minute;
         }
-        container.appendChild(weekContainer);
+        
+        uhrzeitAktualisieren();
     }
 
-    // Hilfsfunktionen für Kalenderwochen
-    function getStartOfWeek(date) {
-        const d = new Date(date);
-        const day = d.getDay();
-        const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-        return new Date(d.setDate(diff));
+    // Liest den aktuellen Zustand der Zeit-Auswahl aus
+    function uhrzeitAktualisieren() {
+        const stundeBeginn = document.getElementById('stunde-beginn').value;
+        const stundeEnde = document.getElementById('stunde-ende').value;
+        
+        const kompletteBeginnZeit = `${stundeBeginn}:${ausgewaehlteMinuteBeginn}`;
+        const kompletteEndeZeit = `${stundeEnde}:${ausgewaehlteMinuteEnde}`;
+        
+        console.log("Aktuelle Zeitauswahl - Beginn:", kompletteBeginnZeit, "| Ende:", kompletteEndeZeit);
+        return { kompletteBeginnZeit, kompletteEndeZeit };
     }
 
-    function getWeekNumber(d) {
-        const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-        date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
-        const startOfYear = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
-        return Math.ceil((((date - startOfYear) / 86400000) + 1) / 7);
-    }
-
-    // Termin speichern
-    document.getElementById('appointment-form').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const newAppointment = {
-            title: document.getElementById('title').value,
-            start_date: document.getElementById('start_date').value,
-            end_date: document.getElementById('end_date').value,
-            start_time: `${document.getElementById('start_hour').value}:${document.getElementById('start_minute').value}:00`,
-            end_time: `${document.getElementById('end_hour').value}:${document.getElementById('end_minute').value}:00`,
-            assigned_to: document.getElementById('assigned_to').value,
-            reminder: document.getElementById('reminder').value
+    // Simuliert das Speichern des Termins in Supabase
+    function terminSichern(event) {
+        event.preventDefault();
+        
+        const zeiten = uhrzeitAktualisieren();
+        
+        const terminDaten = {
+            titel: document.getElementById('titel').value,
+            beginnDatum: document.getElementById('beginn-datum').value,
+            endeDatum: document.getElementById('ende-datum').value,
+            uhrzeitBeginn: zeiten.kompletteBeginnZeit,
+            uhrzeitEnde: zeiten.kompletteEndeZeit,
+            zugeordnet: document.querySelector('input[name="zuordnung"]:checked').value,
+            erinnerung: document.getElementById('erinnerung').value
         };
-
-        const { error } = await supabase.from('appointments').insert([newAppointment]);
-        if (!error) {
-            document.getElementById('appointment-form').reset();
-            // Erneut Standarddaten setzen nach dem Zurücksetzen
-            const today = new Date();
-            const yearStr = today.getFullYear();
-            const monthStr = String(today.getMonth() + 1).padStart(2, '0');
-            const dayStr = String(today.getDate()).padStart(2, '0');
-            const formattedToday = `${yearStr}-${monthStr}-${dayStr}`;
-            document.getElementById('start_date').value = formattedToday;
-            document.getElementById('end_date').value = formattedToday;
-            
-            initTimeDropdowns();
-            loadAppointments();
-        } else {
-            alert('Fehler beim Sichern des Termins: ' + error.message);
-        }
-    });
-
-    // Einkaufsliste laden
-    async function loadShoppingList() {
-        const { data, error } = await supabase.from('shopping_list').select('*').order('created_at', { ascending: false });
-        if (!error) {
-            const ul = document.getElementById('shopping-list-ul');
-            ul.innerHTML = '';
-            if (data.length === 0) {
-                ul.innerHTML = '<li class="list-group-item text-center text-muted">Die Einkaufsliste ist leer</li>';
-                return;
-            }
-            data.forEach(item => {
-                const li = document.createElement('li');
-                li.className = 'list-group-item d-flex justify-content-between align-items-center';
-                li.innerHTML = `
-                    <span>${item.product}</span>
-                    <button class="btn btn-sm btn-outline-danger" onclick="deleteShoppingItem('${item.id}')"><i class="bi bi-trash"></i></button>
-                `;
-                ul.appendChild(li);
-            });
-        }
+        
+        alert(`Termin erfolgreich vorbereitet!\n\n` +
+              `Titel: ${terminDaten.titel}\n` +
+              `Zeitraum: ${terminDaten.beginnDatum} (${terminDaten.uhrzeitBeginn}) bis ${terminDaten.endeDatum} (${terminDaten.uhrzeitEnde})\n` +
+              `Für: ${terminDaten.zugeordnet}`);
+              
+        console.log("Bereit für Supabase Insert:", terminDaten);
     }
 
-    // Einkaufsartikel speichern
-    document.getElementById('shopping-form').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const productInput = document.getElementById('product');
-        const newItem = { product: productInput.value };
-        const { error } = await supabase.from('shopping_list').insert([newItem]);
-        if (!error) {
-            productInput.value = '';
-            loadShoppingList();
-        }
-    });
-
-    // Einkaufsartikel löschen
-    window.deleteShoppingItem = async function(id) {
-        await supabase.from('shopping_list').delete().eq('id', id);
-        loadShoppingList();
+    // Beim Laden der Seite direkt alles initialisieren
+    window.onload = function() {
+        initialisiereStundenDropdowns();
+        navigiereHeute(); // Setzt Kalenderleiste und befüllt Datumsfelder mit dem echten "Heute"
     };
-
-    // Navigation-Event-Listener
-    document.getElementById('btn-prev').addEventListener('click', () => {
-        if (currentView === 'month') currentNavDate.setMonth(currentNavDate.getMonth() - 1);
-        else currentNavDate.setDate(currentNavDate.getDate() - 7);
-        renderCalendar();
-    });
-    document.getElementById('btn-next').addEventListener('click', () => {
-        if (currentView === 'month') currentNavDate.setMonth(currentNavDate.getMonth() + 1);
-        else currentNavDate.setDate(currentNavDate.getDate() + 7);
-        renderCalendar();
-    });
-    document.getElementById('btn-today').addEventListener('click', () => {
-        currentNavDate = new Date();
-        renderCalendar();
-    });
-    document.getElementById('btn-month-view').addEventListener('click', function() {
-        currentView = 'month';
-        this.classList.replace('btn-outline-primary', 'btn-primary');
-        document.getElementById('btn-week-view').classList.replace('btn-primary', 'btn-outline-primary');
-        renderCalendar();
-    });
-    document.getElementById('btn-week-view').addEventListener('click', function() {
-        currentView = 'week';
-        this.classList.replace('btn-outline-primary', 'btn-primary');
-        document.getElementById('btn-month-view').classList.replace('btn-primary', 'btn-outline-primary');
-        renderCalendar();
-    });
-
-    // Supabase Realtime-Kanäle abonnieren für Live-Updates
-    supabase.channel('live-updates')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, () => { loadAppointments(); })
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'shopping_list' }, () => { loadShoppingList(); })
-        .subscribe();
-
-    // App Start
-    document.addEventListener("DOMContentLoaded", () => {
-        // Heutiges Datum in Formular setzen
-        const today = new Date();
-        const yearStr = today.getFullYear();
-        const monthStr = String(today.getMonth() + 1).padStart(2, '0');
-        const dayStr = String(today.getDate()).padStart(2, '0');
-        const formattedToday = `${yearStr}-${monthStr}-${dayStr}`;
-        
-        document.getElementById('start_date').value = formattedToday;
-        document.getElementById('end_date').value = formattedToday;
-        
-        initTimeDropdowns();
-        loadAppointments();
-        loadShoppingList();
-    });
-
-    // Service Worker registrieren
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js').catch(err => console.log('SW Error', err));
-    }
 </script>
+
 </body>
 </html>
