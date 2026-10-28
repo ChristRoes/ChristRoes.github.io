@@ -5,360 +5,748 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Familienplaner Christ - Supabase Edition</title>
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f4f5f7;
-            color: #333;
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --success: #16a34a;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --border: #e2e8f0;
+            --josef-b: #ef4444;
+            --heidi: #ec4899;
+            --josef-r: #f59e0b;
+            --markus: #10b981;
+            --alle: #6366f1;
+        }
+
+        * {
+            box-sizing: border-box;
             margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
             padding: 20px;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
+            align-items: center;
         }
+
         .container {
+            max-width: 1200px;
             width: 100%;
-            max-width: 600px;
-            background: white;
-            padding: 24px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        @media (min-width: 900px) {
+            .container {
+                grid-template-columns: 2fr 1fr;
+            }
+            .full-width {
+                grid-column: span 2;
+            }
+        }
+
+        .card {
+            background: var(--card-bg);
             border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid var(--border);
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
+
         h3, h4 {
-            margin-top: 0;
-            color: #1a202c;
+            margin-bottom: 15px;
+            color: #0f172a;
         }
-        .navigation {
+
+        /* Navigation Header */
+        .calendar-header {
             display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
             gap: 10px;
-            margin-bottom: 20px;
         }
-        .btn {
-            background-color: #edf2f7;
-            border: 1px solid #cbd5e0;
+
+        .nav-buttons, .view-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        button {
             padding: 8px 16px;
+            border: 1px solid var(--border);
+            background: #fff;
             border-radius: 6px;
             cursor: pointer;
             font-weight: 500;
             transition: all 0.2s;
         }
-        .btn:hover {
-            background-color: #e2e8f0;
+
+        button:hover {
+            background: #f1f5f9;
         }
-        .btn-primary {
-            background-color: #3182ce;
-            color: white;
-            border: none;
+
+        button.active {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
         }
-        .btn-primary:hover {
-            background-color: #2b6cb0;
+
+        /* Grid System */
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1px;
+            background: var(--border);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
         }
-        .form-group {
-            margin-bottom: 16px;
-        }
-        label {
-            display: block;
+
+        .weekday-header {
+            background: #f1f5f9;
+            padding: 10px 5px;
+            text-align: center;
             font-weight: 600;
-            margin-bottom: 6px;
-            font-size: 14px;
-            color: #4a5568;
+            font-size: 0.85rem;
         }
+
+        .calendar-day {
+            background: #fff;
+            min-height: 100px;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .calendar-day:hover {
+            background: #f8fafc;
+        }
+
+        .calendar-day.other-month {
+            background: #f1f5f9;
+            color: #94a3b8;
+        }
+
+        .calendar-day.today {
+            box-shadow: inset 0 0 0 2px var(--primary);
+        }
+
+        .calendar-day.selected {
+            background: #f0fdf4;
+            box-shadow: inset 0 0 0 2px var(--success);
+        }
+
+        .day-number {
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 4px;
+        }
+
+        /* Formular Styling */
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 0.87rem;
+            font-weight: 500;
+        }
+
         input[type="text"], input[type="date"], select {
             width: 100%;
-            padding: 10px;
-            border: 1px solid #cbd5e0;
+            padding: 8px 12px;
+            border: 1px solid var(--border);
             border-radius: 6px;
-            box-sizing: border-box;
-            font-size: 16px;
+            outline: none;
+            font-size: 0.95rem;
         }
-        .time-picker-container {
-            display: flex;
-            gap: 10px;
+
+        input:focus, select:focus {
+            border-color: var(--primary);
+        }
+
+        .time-row {
+            display: grid;
+            grid-template-columns: auto 1fr;
             align-items: center;
-            margin-top: 4px;
+            gap: 10px;
+            margin-bottom: 10px;
         }
-        .hour-select {
-            width: 80px;
+
+        .time-selects {
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
+
+        .time-selects select {
+            width: 70px;
+        }
+
         .minute-buttons {
             display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
+            gap: 4px;
         }
-        .time-btn {
-            background: white;
-            border: 1px solid #cbd5e0;
-            padding: 8px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            min-width: 45px;
-            font-weight: 500;
-            transition: all 0.15s;
+
+        .minute-buttons button {
+            padding: 6px 10px;
+            font-size: 0.8rem;
         }
-        .time-btn:hover {
-            background: #f7fafc;
-            border-color: #a0aec0;
-        }
-        .time-btn.active {
-            background-color: #3182ce;
+
+        .minute-buttons button.selected {
+            background: var(--primary);
             color: white;
-            border-color: #3182ce;
+            border-color: var(--primary);
         }
-        .radio-group {
+
+        .person-selector {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            grid-template-columns: repeat(2, 1fr);
             gap: 8px;
-            margin-top: 6px;
         }
-        .radio-label {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: #f7fafc;
-            padding: 10px;
-            border: 1px solid #e2e8f0;
+
+        .person-btn {
+            padding: 8px;
+            font-size: 0.85rem;
+            text-align: center;
+            border: 1px solid var(--border);
             border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: normal;
+            background: #fff;
         }
-        .radio-label input {
-            margin: 0;
+
+        .person-btn[data-person="Josef B."].selected { background: var(--josef-b); color: white; border-color: var(--josef-b); }
+        .person-btn[data-person="Heidi"].selected { background: var(--heidi); color: white; border-color: var(--heidi); }
+        .person-btn[data-person="Josef R."].selected { background: var(--josef-r); color: white; border-color: var(--josef-r); }
+        .person-btn[data-person="Markus"].selected { background: var(--markus); color: white; border-color: var(--markus); }
+        .person-btn[data-person="Alle"].selected { background: var(--alle); color: white; border-color: var(--alle); }
+
+        .btn-submit {
+            width: 100%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 6px;
+            margin-top: 10px;
+        }
+
+        .btn-submit:hover {
+            background: var(--primary-hover);
+        }
+
+        /* Termine im Kalender */
+        .event-badge {
+            font-size: 0.75rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: white;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .badge-josef-b { background-color: var(--josef-b); }
+        .badge-heidi { background-color: var(--heidi); }
+        .badge-josef-r { background-color: var(--josef-r); }
+        .badge-markus { background-color: var(--markus); }
+        .badge-alle { background-color: var(--alle); }
+
+        /* Einkaufsliste */
+        .shopping-list {
+            margin-top: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .shopping-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .shopping-item .actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .shopping-item button {
+            padding: 2px 6px;
+            font-size: 0.75rem;
+        }
+
+        .person-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 5px;
         }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h3>Familienplaner Christ - Supabase Edition</h3>
-    <p style="font-size: 14px; color: #718096; margin-top: -10px;">Online-Modus</p>
+    <div class="container">
+        
+        <!-- Kalender-Modul -->
+        <div class="card">
+            <div class="calendar-header">
+                <div class="nav-buttons">
+                    <button onclick="navigate(-1)">Zurück</button>
+                    <button onclick="navigate(0)">Heute</button>
+                    <button onclick="navigate(1)">Vor</button>
+                </div>
+                <h3 id="calendar-title">Monat</h3>
+                <div class="view-buttons">
+                    <button id="view-month" class="active" onclick="setView('month')">Monat</button>
+                    <button id="view-week" onclick="setView('week')">Woche</button>
+                </div>
+            </div>
+            
+            <div class="calendar-grid" id="calendar-grid">
+                <!-- Wird per JS befüllt -->
+            </div>
+        </div>
 
-    <!-- Kalender-Navigation Simulation -->
-    <div class="navigation">
-        <button class="btn" onclick="navigiereTag(-1)">Zurück</button>
-        <button class="btn" onclick="navigiereHeute()">Heute</button>
-        <button class="btn" onclick="navigiereTag(1)">Vor</button>
-        <span style="margin-left: auto; align-self: center; font-weight: 600;" id="kalender-anzeige">Monat / Woche</span>
+        <!-- Termin-Formular -->
+        <div class="card">
+            <h4>Neuen Termin eintragen</h4>
+            <form id="appointment-form" onsubmit="saveAppointment(event)">
+                <div class="form-group">
+                    <label>Titel / Beschreibung</label>
+                    <input type="text" id="event-title" required placeholder="z.B. Zahnarzt, Einkauf...">
+                </div>
+
+                <div class="form-group">
+                    <label>Beginn-Datum</label>
+                    <input type="date" id="start-date" required onchange="handleStartDateChange()">
+                </div>
+
+                <div class="form-group">
+                    <label>Ende-Datum</label>
+                    <input type="date" id="end-date" required>
+                </div>
+
+                <!-- Uhrzeit Beginn -->
+                <div class="time-row">
+                    <label style="font-size:0.85rem; font-weight:500; width:90px;">Uhrzeit Beginn</label>
+                    <div class="time-selects">
+                        <select id="start-hour"></select>
+                        <div class="minute-buttons" id="start-minutes">
+                            <button type="button" class="selected" onclick="setMinute('start', '00', this)">00</button>
+                            <button type="button" onclick="setMinute('start', '15', this)">15</button>
+                            <button type="button" onclick="setMinute('start', '30', this)">30</button>
+                            <button type="button" onclick="setMinute('start', '45', this)">45</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Uhrzeit Ende -->
+                <div class="time-row">
+                    <label style="font-size:0.85rem; font-weight:500; width:90px;">Uhrzeit Ende</label>
+                    <div class="time-selects">
+                        <select id="end-hour"></select>
+                        <div class="minute-buttons" id="end-minutes">
+                            <button type="button" class="selected" onclick="setMinute('end', '00', this)">00</button>
+                            <button type="button" onclick="setMinute('end', '15', this)">15</button>
+                            <button type="button" onclick="setMinute('end', '30', this)">30</button>
+                            <button type="button" onclick="setMinute('end', '45', this)">45</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Zugeordnet für:</label>
+                    <div class="person-selector">
+                        <button type="button" class="person-btn selected" data-person="Josef B." onclick="selectPerson(this)">Josef B.</button>
+                        <button type="button" class="person-btn" data-person="Heidi" onclick="selectPerson(this)">Heidi</button>
+                        <button type="button" class="person-btn" data-person="Josef R." onclick="selectPerson(this)">Josef R.</button>
+                        <button type="button" class="person-btn" data-person="Markus" onclick="selectPerson(this)">Markus</button>
+                        <button type="button" class="person-btn" data-person="Alle" onclick="selectPerson(this)">Alle</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Standard-Erinnerung</label>
+                    <select id="reminder">
+                        <option>Keine Erinnerung</option>
+                        <option>15 Minuten vorher</option>
+                        <option>30 Minuten vorher</option>
+                        <option>1 Stunde vorher</option>
+                        <option>1 Tag vorher</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn-submit">Termin sichern</button>
+            </form>
+        </div>
+
+        <!-- Einkaufslisten-Modul -->
+        <div class="card full-width">
+            <h4>Artikel erfassen & Einkaufsliste</h4>
+            <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+                <input type="text" id="shop-item-title" placeholder="Artikelname..." style="flex: 2; min-width: 200px;">
+                <select id="shop-item-person" style="flex: 1; min-width: 150px;">
+                    <option value="Josef B.">Josef B.</option>
+                    <option value="Heidi">Heidi</option>
+                    <option value="Josef R.">Josef R.</option>
+                    <option value="Markus">Markus</option>
+                    <option value="Alle">Alle</option>
+                </select>
+                <button onclick="addShoppingItem()" class="active" style="white-space: nowrap;">Artikel hinzufügen</button>
+            </div>
+            
+            <div class="shopping-list" id="shopping-list-container">
+                <!-- Wird per JS befüllt -->
+            </div>
+        </div>
+
     </div>
 
-    <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;">
+    <script>
+        // State Management
+        let currentView = 'month'; // 'month' oder 'week'
+        let currentDate = new Date(2026, 9, 28); // 28.10.2026 als Basis
+        let selectedDate = new Date(2026, 9, 28);
+        
+        let selectedStartMinute = '00';
+        let selectedEndMinute = '00';
+        let selectedPerson = 'Josef B.';
 
-    <h4>Neuen Termin eintragen</h4>
-    
-    <form id="termin-form" onsubmit="terminSichern(event)">
-        <div class="form-group">
-            <label for="titel">Titel / Beschreibung</label>
-            <input type="text" id="titel" placeholder="Z.B. Zahnarzt, Einkauf, Geburtstag..." required>
-        </div>
+        // Speicher-Arrays (Simuliertes Frontend/Supabase-Datensätze)
+        let appointments = [
+            { id: 1, title: 'Zahnarzt', startDate: '2026-10-28', endDate: '2026-10-28', startHour: '10', startMinute: '15', endHour: '11', endMinute: '00', person: 'Josef B.' }
+        ];
+        let shoppingList = [];
 
-        <div class="form-group">
-            <label for="beginn-datum">Beginn-Datum</label>
-            <input type="date" id="beginn-datum" required onchange="datumManuellGeaendert('beginn')">
-        </div>
+        const weekdays = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+        const personColors = {
+            'Josef B.': 'var(--josef-b)',
+            'Heidi': 'var(--heidi)',
+            'Josef R.': 'var(--josef-r)',
+            'Markus': 'var(--markus)',
+            'Alle': 'var(--alle)'
+        };
 
-        <div class="form-group">
-            <label for="ende-datum">Ende-Datum</label>
-            <input type="date" id="ende-datum" required>
-        </div>
+        // Init beim Laden
+        window.onload = function() {
+            populateHours();
+            initDateFields();
+            renderCalendar();
+            renderShoppingList();
+        };
 
-        <!-- Uhrzeit Beginn -->
-        <div class="form-group">
-            <label>Uhrzeit Beginn</label>
-            <div class="time-picker-container">
-                <select id="stunde-beginn" class="hour-select" onchange="uhrzeitAktualisieren()">
-                    <!-- Stunden werden via JS befüllt -->
-                </select>
-                <div class="minute-buttons" id="minuten-gruppe-beginn">
-                    <button type="button" class="time-btn active" onclick="waehleMinute('beginn', '00', this)">00</button>
-                    <button type="button" class="time-btn" onclick="waehleMinute('beginn', '15', this)">15</button>
-                    <button type="button" class="time-btn" onclick="waehleMinute('beginn', '30', this)">30</button>
-                    <button type="button" class="time-btn" onclick="waehleMinute('beginn', '45', this)">45</button>
-                </div>
-            </div>
-        </div>
+        function populateHours() {
+            const startHourSelect = document.getElementById('start-hour');
+            const endHourSelect = document.getElementById('end-hour');
+            for(let i=0; i<24; i++) {
+                let h = i < 10 ? '0' + i : i;
+                startHourSelect.add(new Option(h, h));
+                endHourSelect.add(new Option(h, h));
+            }
+            startHourSelect.value = '08';
+            endHourSelect.value = '09';
+        }
 
-        <!-- Uhrzeit Ende -->
-        <div class="form-group">
-            <label>Uhrzeit Ende</label>
-            <div class="time-picker-container">
-                <select id="stunde-ende" class="hour-select" onchange="uhrzeitAktualisieren()">
-                    <!-- Stunden werden via JS befüllt -->
-                </select>
-                <div class="minute-buttons" id="minuten-gruppe-ende">
-                    <button type="button" class="time-btn active" onclick="waehleMinute('ende', '00', this)">00</button>
-                    <button type="button" class="time-btn" onclick="waehleMinute('ende', '15', this)">15</button>
-                    <button type="button" class="time-btn" onclick="waehleMinute('ende', '30', this)">30</button>
-                    <button type="button" class="time-btn" onclick="waehleMinute('ende', '45', this)">45</button>
-                </div>
-            </div>
-        </div>
+        function initDateFields() {
+            const dateStr = formatDateIso(selectedDate);
+            document.getElementById('start-date').value = dateStr;
+            document.getElementById('end-date').value = dateStr;
+        }
 
-        <div class="form-group">
-            <label>Zugeordnet für:</label>
-            <div class="radio-group">
-                <label class="radio-label"><input type="radio" name="zuordnung" value="Josef B." checked> Josef B.</label>
-                <label class="radio-label"><input type="radio" name="zuordnung" value="Heidi"> Heidi</label>
-                <label class="radio-label"><input type="radio" name="zuordnung" value="Josef R."> Josef R.</label>
-                <label class="radio-label"><input type="radio" name="zuordnung" value="Markus"> Markus</label>
-                <label class="radio-label"><input type="radio" name="zuordnung" value="Alle"> Alle</label>
-            </div>
-        </div>
+        function formatDateIso(date) {
+            let d = new Date(date);
+            let month = '' + (d.getMonth() + 1);
+            let day = '' + d.getDate();
+            let year = d.getFullYear();
+            if (month.length < 2) month = '0' + month;
+            if (day.length < 2) day = '0' + day;
+            return [year, month, day].join('-');
+        }
 
-        <div class="form-group">
-            <label for="erinnerung">Standard-Erinnerung</label>
-            <select id="erinnerung">
-                <option value="keine">Keine Erinnerung</option>
-                <option value="15m">15 Minuten vorher</option>
-                <option value="30m">30 Minuten vorher</option>
-                <option value="1h">1 Stunde vorher</option>
-                <option value="1d">1 Tag vorher</option>
-            </select>
-        </div>
+        function handleStartDateChange() {
+            // Wenn der Nutzer das Startdatum manuell ändert, zieht das Enddatum als Voreinstellung nach
+            document.getElementById('end-date').value = document.getElementById('start-date').value;
+        }
 
-        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 16px; margin-top: 10px;">Termin sichern</button>
-    </form>
-</div>
+        function setMinute(type, value, btn) {
+            const parent = btn.parentElement;
+            parent.querySelectorAll('button').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            if(type === 'start') selectedStartMinute = value;
+            if(type === 'end') selectedEndMinute = value;
+        }
 
-<script>
-    // Aktueller Zustand des ausgewählten Datums im Kalender
-    let aktuellesKalenderDatum = new Date();
+        function selectPerson(btn) {
+            document.querySelectorAll('.person-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            selectedPerson = btn.getAttribute('data-person');
+        }
 
-    // Variablen für die ausgewählten Minuten-Werte
-    let ausgewaehlteMinuteBeginn = "00";
-    let ausgewaehlteMinuteEnde = "00";
+        function setView(view) {
+            currentView = view;
+            document.getElementById('view-month').classList.toggle('active', view === 'month');
+            document.getElementById('view-week').classList.toggle('active', view === 'week');
+            renderCalendar();
+        }
 
-    // Formatiert ein Date-Objekt zu YYYY-MM-DD für die <input type="date"> Felder
-    function formatiereDatum(date) {
-        const j = date.getFullYear();
-        const m = String(date.getMonth() + 1).padStart(2, '0');
-        const t = String(date.getDate()).padStart(2, '0');
-        return `${j}-${m}-${t}`;
-    }
+        function navigate(direction) {
+            if (direction === 0) {
+                currentDate = new Date(2026, 9, 28); // "Heute" für dieses Setup
+            } else {
+                if (currentView === 'month') {
+                    currentDate.setMonth(currentDate.getMonth() + direction);
+                } else {
+                    currentDate.setDate(currentDate.getDate() + (direction * 7));
+                }
+            }
+            renderCalendar();
+        }
 
-    // Formatiert das Datum für die obere Kalender-Anzeigeleiste
-    function aktualisiereKalenderAnzeige() {
-        const optionen = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        document.getElementById('kalender-anzeige').innerText = aktuellesKalenderDatum.toLocaleDateString('de-DE', optionen);
-    }
+        function selectCalendarDay(dateStr) {
+            selectedDate = new Date(dateStr);
+            document.getElementById('start-date').value = dateStr;
+            document.getElementById('end-date').value = dateStr;
+            renderCalendar();
+        }
 
-    // Setzt die Datumsfelder anhand des ausgewählten Kalendertags (wird bei Voreinstellung identisch gesetzt)
-    function updateDatumsFelder() {
-        const datumsString = formatiereDatum(aktuellesKalenderDatum);
-        document.getElementById('beginn-datum').value = datumsString;
-        document.getElementById('ende-datum').value = datumsString;
-    }
+        function renderCalendar() {
+            const grid = document.getElementById('calendar-grid');
+            grid.innerHTML = '';
+            
+            // Wochentage-Header erzeugen
+            weekdays.forEach(day => {
+                const header = document.createElement('div');
+                header.className = 'weekday-header';
+                header.innerText = day;
+                grid.appendChild(header);
+            });
 
-    // Navigation: Vor oder Zurück blättern
-    function navigiereTag(anzahlTage) {
-        aktuellesKalenderDatum.setDate(aktuellesKalenderDatum.getDate() + anzahlTage);
-        aktualisiereKalenderAnzeige();
-        updateDatumsFelder();
-    }
-
-    // Navigation: Zurück auf das echte "Heute" springen
-    function navigiereHeute() {
-        aktuellesKalenderDatum = new Date();
-        aktualisiereKalenderAnzeige();
-        updateDatumsFelder();
-    }
-
-    // Wenn der Nutzer das Beginn-Datum händisch ändert, kann das Ende-Datum separat bleiben
-    function datumManuellGeaendert(typ) {
-        if (typ === 'beginn') {
-            // Optionale Logik: Falls das Ende vor dem Beginn liegt, automatisch anpassen
-            const beginn = document.getElementById('beginn-datum').value;
-            const ende = document.getElementById('ende-datum').value;
-            if (ende < beginn) {
-                document.getElementById('ende-datum').value = beginn;
+            if (currentView === 'month') {
+                renderMonthView(grid);
+            } else {
+                renderWeekView(grid);
             }
         }
-    }
 
-    // Befüllt die Dropdowns für die Stunden (00 - 23)
-    function initialisiereStundenDropdowns() {
-        const stundeBeginnSelect = document.getElementById('stunde-beginn');
-        const stundeEndeSelect = document.getElementById('stunde-ende');
-        
-        for (let i = 0; i < 24; i++) {
-            const stundeString = String(i).padStart(2, '0');
+        function renderMonthView(grid) {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
             
-            const optBeginn = document.createElement('option');
-            optBeginn.value = stundeString;
-            optBeginn.text = stundeString;
-            stundeBeginnSelect.appendChild(optBeginn);
+            // Titel setzen
+            const monthNames = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
+            document.getElementById('calendar-title').innerText = `${monthNames[month]} ${year}`;
 
-            const optEnde = document.createElement('option');
-            optEnde.value = stundeString;
-            optEnde.text = stundeString;
-            stundeEndeSelect.appendChild(optEnde);
+            // Erster Tag des Monats (0 = Sonntag, 1 = Montag...)
+            let firstDayIndex = new Date(year, month, 1).getDay() - 1;
+            if (firstDayIndex === -1) firstDayIndex = 6; // Sonntag korrigieren
+
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+            // Tage des vorherigen Monats auffüllen
+            for (let i = firstDayIndex - 1; i >= 0; i--) {
+                const prevDate = new Date(year, month - 1, daysInPrevMonth - i);
+                createDayCell(grid, prevDate, true);
+            }
+
+            // Tage des aktuellen Monats
+            for (let i = 1; i <= daysInMonth; i++) {
+                const currDate = new Date(year, month, i);
+                createDayCell(grid, currDate, false);
+            }
+
+            // Tage des nächsten Monats auffüllen (bis das 6-Wochen-Raster voll ist)
+            const totalCells = grid.children.length - 7; // Abzüglich Header
+            const remainingCells = 42 - totalCells;
+            for (let i = 1; i <= remainingCells; i++) {
+                const nextDate = new Date(year, month + 1, i);
+                createDayCell(grid, nextDate, true);
+            }
         }
-        
-        // Standardwerte setzen (z. B. Beginn jetzt, Ende eine Stunde später)
-        const jetzigeStunde = new Date().getHours();
-        stundeBeginnSelect.value = String(jetzigeStunde).padStart(2, '0');
-        stundeEndeSelect.value = String((jetzigeStunde + 1) % 24).padStart(2, '0');
-    }
 
-    // Behebt den Fehler bei der Uhrzeit-Auswahl (aktiviert Minuten-Buttons)
-    function waehleMinute(typ, minute, buttonElement) {
-        // Alle aktiven Klassen in der jeweiligen Minuten-Gruppe entfernen
-        const gruppenId = typ === 'beginn' ? 'minuten-gruppe-beginn' : 'minuten-gruppe-ende';
-        const buttons = document.getElementById(gruppenId).querySelectorAll('.time-btn');
-        buttons.forEach(btn => btn.classList.remove('active'));
-        
-        // Gewählten Button optisch hervorheben
-        buttonElement.classList.add('active');
-        
-        // Wert intern speichern
-        if (typ === 'beginn') {
-            ausgewaehlteMinuteBeginn = minute;
-        } else if (typ === 'ende') {
-            ausgewaehlteMinuteEnde = minute;
+        function renderWeekView(grid) {
+            // Finden des Montags der aktuellen Woche
+            const dayOfWeek = currentDate.getDay();
+            const distanceToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+            const monday = new Date(currentDate);
+            monday.setDate(currentDate.getDate() + distanceToMonday);
+
+            const sunday = new Date(monday);
+            sunday.setDate(monday.getDate() + 6);
+
+            // Titel setzen
+            document.getElementById('calendar-title').innerText = `KW ${getWeekNumber(monday)} (${monday.getDate()}.10. - ${sunday.getDate()}.10.2026)`;
+
+            // 7 Tage erzeugen
+            for (let i = 0; i < 7; i++) {
+                const dayDate = new Date(monday);
+                dayDate.setDate(monday.getDate() + i);
+                createDayCell(grid, dayDate, false);
+            }
         }
-        
-        uhrzeitAktualisieren();
-    }
 
-    // Liest den aktuellen Zustand der Zeit-Auswahl aus
-    function uhrzeitAktualisieren() {
-        const stundeBeginn = document.getElementById('stunde-beginn').value;
-        const stundeEnde = document.getElementById('stunde-ende').value;
-        
-        const kompletteBeginnZeit = `${stundeBeginn}:${ausgewaehlteMinuteBeginn}`;
-        const kompletteEndeZeit = `${stundeEnde}:${ausgewaehlteMinuteEnde}`;
-        
-        console.log("Aktuelle Zeitauswahl - Beginn:", kompletteBeginnZeit, "| Ende:", kompletteEndeZeit);
-        return { kompletteBeginnZeit, kompletteEndeZeit };
-    }
+        function getWeekNumber(d) {
+            d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+            d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
+            var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+            var weekNo = Math.ceil(( ( (d - yearStart) / 86400000) + 1)/7);
+            return weekNo;
+        }
 
-    // Simuliert das Speichern des Termins in Supabase
-    function terminSichern(event) {
-        event.preventDefault();
-        
-        const zeiten = uhrzeitAktualisieren();
-        
-        const terminDaten = {
-            titel: document.getElementById('titel').value,
-            beginnDatum: document.getElementById('beginn-datum').value,
-            endeDatum: document.getElementById('ende-datum').value,
-            uhrzeitBeginn: zeiten.kompletteBeginnZeit,
-            uhrzeitEnde: zeiten.kompletteEndeZeit,
-            zugeordnet: document.querySelector('input[name="zuordnung"]:checked').value,
-            erinnerung: document.getElementById('erinnerung').value
-        };
-        
-        alert(`Termin erfolgreich vorbereitet!\n\n` +
-              `Titel: ${terminDaten.titel}\n` +
-              `Zeitraum: ${terminDaten.beginnDatum} (${terminDaten.uhrzeitBeginn}) bis ${terminDaten.endeDatum} (${terminDaten.uhrzeitEnde})\n` +
-              `Für: ${terminDaten.zugeordnet}`);
-              
-        console.log("Bereit für Supabase Insert:", terminDaten);
-    }
+        function createDayCell(grid, date, isOtherMonth) {
+            const cell = document.createElement('div');
+            cell.className = 'calendar-day';
+            if (isOtherMonth) cell.classList.add('other-month');
+            
+            const dateStr = formatDateIso(date);
+            
+            // "Heute" markieren (28.10.2026 simuliert)
+            if (dateStr === '2026-10-28') cell.classList.add('today');
+            // Ausgewählten Tag markieren
+            if (dateStr === formatDateIso(selectedDate)) cell.classList.add('selected');
 
-    // Beim Laden der Seite direkt alles initialisieren
-    window.onload = function() {
-        initialisiereStundenDropdowns();
-        navigiereHeute(); // Setzt Kalenderleiste und befüllt Datumsfelder mit dem echten "Heute"
-    };
-</script>
+            cell.onclick = () => selectCalendarDay(dateStr);
 
+            const num = document.createElement('div');
+            num.className = 'day-number';
+            num.innerText = date.getDate();
+            cell.appendChild(num);
+
+            // Passende Termine & Einkäufe für diesen Tag einbetten
+            appointments.forEach(app => {
+                if (dateStr >= app.startDate && dateStr <= app.endDate) {
+                    const badge = document.createElement('div');
+                    badge.className = `event-badge badge-${app.person.toLowerCase().replace(' ', '-')}`;
+                    badge.innerText = `[${app.startHour}:${app.startMinute}] ${app.title}`;
+                    cell.appendChild(badge);
+                }
+            });
+
+            grid.appendChild(cell);
+        }
+
+        // Termin speichern
+        function saveAppointment(e) {
+            e.preventDefault();
+            const title = document.getElementById('event-title').value;
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+            const startHour = document.getElementById('start-hour').value;
+            const endHour = document.getElementById('end-hour').value;
+
+            const newApp = {
+                id: Date.now(),
+                title: title,
+                startDate: startDate,
+                endDate: endDate,
+                startHour: startHour,
+                startMinute: selectedStartMinute,
+                endHour: endHour,
+                endMinute: selectedEndMinute,
+                person: selectedPerson
+            };
+
+            appointments.push(newApp);
+            renderCalendar();
+            
+            // Formular zurücksetzen bis auf Datum
+            document.getElementById('event-title').value = '';
+        }
+
+        // Artikel zu Einkaufsliste hinzufügen
+        function addShoppingItem() {
+            const titleInput = document.getElementById('shop-item-title');
+            const personSelect = document.getElementById('shop-item-person');
+            
+            if (!titleInput.value.trim()) return;
+
+            const newItem = {
+                id: Date.now(),
+                title: titleInput.value.trim(),
+                person: personSelect.value,
+                date: formatDateIso(selectedDate) // Nutzt den aktuell ausgewählten Kalendertag
+            };
+
+            shoppingList.push(newItem);
+            
+            // Automatisch als "Einkauf" in die Terminübersicht pushen
+            const targetDateStr = formatDateIso(selectedDate);
+            appointments.push({
+                id: 'shop-' + newItem.id,
+                title: `Einkauf: ${newItem.title}`,
+                startDate: targetDateStr,
+                endDate: targetDateStr,
+                startHour: '12', // Standardzeit für Einkäufe
+                startMinute: '00',
+                endHour: '13',
+                endMinute: '00',
+                person: newItem.person
+            });
+
+            titleInput.value = '';
+            renderShoppingList();
+            renderCalendar();
+        }
+
+        // Artikel löschen
+        function deleteShoppingItem(id) {
+            shoppingList = shoppingList.filter(item => item.id !== id);
+            appointments = appointments.filter(app => app.id !== 'shop-' + id);
+            renderShoppingList();
+            renderCalendar();
+        }
+
+        // Einkaufsliste rendern
+        function renderShoppingList() {
+            const container = document.getElementById('shopping-list-container');
+            container.innerHTML = '';
+
+            if (shoppingList.length === 0) {
+                container.innerHTML = '<div style="color: #94a3b8; font-size: 0.9rem; font-style: italic;">Keine Artikel auf der Liste.</div>';
+                return;
+            }
+
+            shoppingList.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'shopping-item';
+                
+                const dotColor = personColors[item.person] || '#6366f1';
+                
+                div.innerHTML = `
+                    <div>
+                        <span class="person-indicator" style="background-color: ${dotColor}"></span>
+                        <strong>${item.title}</strong> <span style="font-size: 0.8rem; color:#64748b;">(für ${item.person} am ${item.date})</span>
+                    </div>
+                    <div class="actions">
+                        <button onclick="deleteShoppingItem(${item.id})" style="border-color:#f1f5f9; color:#ef4444;">Erledigt / Löschen</button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+    </script>
 </body>
 </html>
