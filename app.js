@@ -1,3 +1,4 @@
+// === KONFIGURATION (beides ist öffentlich gedacht; Schutz kommt von Login + RLS) ===
 const SUPABASE_URL = 'https://hdettzthupebrsgqiorv.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhkZXR0enRodXBlYnJzZ3Fpb3J2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMyMTMxNDgsImV4cCI6MjEwODc4OTE0OH0.ehU5KkBtgGJvuqjw4aBxprZ7a1rtBhhRia_hDi4CBHw';
 const APP_VERSION = '6';
