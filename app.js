@@ -1,7 +1,8 @@
 // === KONFIGURATION (beides ist öffentlich gedacht; Schutz kommt von Login + RLS) ===
 const SUPABASE_URL = 'https://hdettzthupebrsgqiorv.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhkZXR0enRodXBlYnJzZ3Fpb3J2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMyMTMxNDgsImV4cCI6MjEwODc4OTE0OH0.ehU5KkBtgGJvuqjw4aBxprZ7a1rtBhhRia_hDi4CBHw';
-const APP_VERSION = '6';
+const APP_VERSION = '10';
+
 const NAMES = { josefb:'Josef B.', heidi:'Heidi', josefr:'Josef R.', markus:'Markus', alle:'Alle' };
 const MON = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
 const $ = id => document.getElementById(id);
@@ -11,6 +12,13 @@ const pk = p => (NAMES[p] ? p : 'alle');
 let sb, view = 'monat', cur = new Date(), sel = new Date(), minS = '00', minE = '00', apps = [], shop = [], chan;
 
 const status = (t, bad) => { $('status').textContent = t; $('status').style.color = bad ? '#b91c1c' : ''; };
+let toastTimer;
+function toast(t) {
+  let b = $('toast');
+  if (!b) { b = el('div'); b.id = 'toast'; b.setAttribute('role', 'status'); document.body.appendChild(b); }
+  b.textContent = t; b.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => b.classList.remove('show'), 2500);
+}
 const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
 
 // ---------- Start ----------
@@ -41,7 +49,7 @@ async function loadAll() {
   const [a, s] = await Promise.all([
     sb.from('appointments').select('*').order('start_date'),
     sb.from('shopping_items').select('*').order('shop_date')]);
-  if (a.error || s.error) return status('Offline / Fehler – Daten evtl. nicht aktuell', true);
+  if (a.error || s.error) { const e = a.error || s.error; console.error(e); return status('Fehler: ' + e.message, true); }
   apps = a.data; shop = s.data; status('Synchronisiert ' + new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }));
   renderCalendar(); renderShopping();
 }
@@ -92,7 +100,7 @@ async function saveAppointment(e) {
     start_time: `${$('app-start-hour').value}:${minS}`, end_time: `${$('app-end-hour').value}:${minE}`,
     person: pk($('app-person').value), reminder: $('app-reminder').value });
   if (error) return alert('Speichern fehlgeschlagen: ' + error.message);
-  $('app-title').value = ''; loadAll();
+  $('app-title').value = ''; toast('Termin gespeichert'); loadAll();
 }
 async function saveShopping(e) {
   e.preventDefault();
@@ -100,7 +108,7 @@ async function saveShopping(e) {
   if (!title || !d) return;
   const { error } = await sb.from('shopping_items').insert({ title, shop_date: d, person: pk($('shop-person').value) });
   if (error) return alert('Speichern fehlgeschlagen: ' + error.message);
-  $('shop-title').value = ''; loadAll();
+  $('shop-title').value = ''; toast('Artikel hinzugefügt'); loadAll();
 }
 async function del(table, id) {
   const { error } = await sb.from(table).delete().eq('id', id);
@@ -134,6 +142,17 @@ function dayCell(date, other) {
   c.addEventListener('click', () => { sel = new Date(date); updateFormDates(sel); renderCalendar(); });
   c.appendChild(el('div', 'day-number', date.getDate()));
   const ds = iso(date);
+  const fe = Kalender.feiertag(ds), fr = Kalender.ferien(ds);
+  if (fe) {
+    c.classList.add('holiday');
+    const b = el('div', 'holiday-badge', '🎉 ' + fe); b.title = fe + ' (Feiertag in Bayern)'; c.appendChild(b);
+  }
+  if (fr) {
+    c.classList.add('school-holiday');
+    if (ds === fr.start || date.getDay() === 1) {
+      const b = el('div', 'school-badge', '🏫 ' + fr.name); b.title = 'Schulferien: ' + fr.name; c.appendChild(b);
+    }
+  }
   apps.filter(a => a.start_date <= ds && a.end_date >= ds).forEach(a => {
     const b = el('div', 'appointment-badge ' + pk(a.person), `${a.start_time || ''} ${a.title}`.trim());
     b.title = `${a.title} – Klicken zum Löschen`;

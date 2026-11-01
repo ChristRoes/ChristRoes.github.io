@@ -1,6 +1,6 @@
 // Version bei jeder Änderung erhöhen – so erkennen Android, iOS und Desktop das Update.
-const VERSION = 'planer-v5';
-const STATIC = ['./', 'index.html', 'app.js', 'style.css', 'manifest.json', 'icon-180.png', 'icon-192.png', 'icon-512.png'];
+const VERSION = 'planer-v10';
+const STATIC = ['./', 'index.html', 'app.js', 'holidays.js', 'style.css', 'manifest.json', 'icon-180.png', 'icon-192.png', 'icon-512.png'];
 const CDN = 'https://cdn.jsdelivr.net/';
 
 self.addEventListener('install', e => {
