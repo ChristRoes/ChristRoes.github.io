@@ -1,7 +1,7 @@
 // === KONFIGURATION (beides ist öffentlich gedacht; Schutz kommt von Login + RLS) ===
 const SUPABASE_URL = 'https://hdettzthupebrsgqiorv.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhkZXR0enRodXBlYnJzZ3Fpb3J2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMyMTMxNDgsImV4cCI6MjEwODc4OTE0OH0.ehU5KkBtgGJvuqjw4aBxprZ7a1rtBhhRia_hDi4CBHw';
-const APP_VERSION = '10';
+const APP_VERSION = '11';
 
 const NAMES = { josefb:'Josef B.', heidi:'Heidi', josefr:'Josef R.', markus:'Markus', alle:'Alle' };
 const MON = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
@@ -134,7 +134,32 @@ function renderCalendar() {
     $('calendar-title').textContent = `KW ${weekNo(start)} (${start.toLocaleDateString('de-DE', { day: 'numeric', month: 'short' })} - ${end.toLocaleDateString('de-DE', { day: 'numeric', month: 'short', year: 'numeric' })})`;
     for (let i = 0; i < 7; i++) { const d = new Date(start); d.setDate(start.getDate() + i); body.appendChild(dayCell(d, false)); }
   }
+  renderDay();
 }
+
+// Tagesdetails (auf dem Handy sind die Kalenderfelder zu klein für lesbare Texte)
+function renderDay() {
+  const ds = iso(sel), list = $('day-list'); list.replaceChildren();
+  $('day-title').textContent = sel.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  const row = (cls, text, p, btn) => {
+    const li = el('li', cls), sp = el('span');
+    if (p) { const dot = el('span', 'person-dot'); dot.style.backgroundColor = `var(--${p})`; sp.appendChild(dot); }
+    sp.append(text); li.appendChild(sp); if (btn) li.appendChild(btn); list.appendChild(li);
+  };
+  const button = (label, fn) => { const b = el('button', 'btn btn-danger', label); b.type = 'button'; b.addEventListener('click', fn); return b; };
+  const fe = Kalender.feiertag(ds), fr = Kalender.ferien(ds);
+  if (fe) row('day-fe', '🎉 ' + fe + ' (Feiertag)');
+  if (fr) row('day-fr', '🏫 Schulferien: ' + fr.name);
+  apps.filter(a => a.start_date <= ds && a.end_date >= ds).forEach(a => {
+    const t = a.start_time ? `${a.start_time}${a.end_time ? '–' + a.end_time : ''} ` : '';
+    row('', `${t}${a.title} (${NAMES[pk(a.person)]})`, pk(a.person),
+      button('Löschen', () => { if (confirm(`Termin „${a.title}" löschen?`)) del('appointments', a.id); }));
+  });
+  shop.filter(i => i.shop_date === ds).forEach(i =>
+    row('', `🛒 ${i.title} (${NAMES[pk(i.person)]})`, pk(i.person), button('Erledigt', () => del('shopping_items', i.id))));
+  if (!list.children.length) row('day-empty', 'Keine Einträge an diesem Tag');
+}
+
 function dayCell(date, other) {
   const c = el('div', 'calendar-day' + (other ? ' other-month' : ''));
   if (date.toDateString() === new Date().toDateString()) c.classList.add('today');
