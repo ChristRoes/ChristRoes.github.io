@@ -1,58 +1,39 @@
-const CACHE_NAME = 'planer-v4';
-const ASSETS = [
-  'index.html',
-  'manifest.json',
-  'icon-192.png',
-  'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css',
-  'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css',
-  'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js'
-];
+// Version bei jeder Änderung erhöhen – so erkennen Android, iOS und Desktop das Update.
+const VERSION = 'planer-v5';
+const STATIC = ['./', 'index.html', 'app.js', 'style.css', 'manifest.json', 'icon-180.png', 'icon-192.png', 'icon-512.png'];
+const CDN = 'https://cdn.jsdelivr.net/';
 
 self.addEventListener('install', e => {
-  e.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(ASSETS);
-    }).then(() => self.skipWaiting())
-  );
+  e.waitUntil(caches.open(VERSION).then(c => Promise.all(STATIC.map(u => c.add(new Request(u, { cache: 'reload' })).catch(() => {})))));
 });
-
 self.addEventListener('activate', e => {
-  e.waitUntil(
-    caches.keys().then(keys => {
-      return Promise.all(
-        keys.map(key => {
-          if (key !== CACHE_NAME) {
-            return caches.delete(key);
-          }
-        })
-      );
-    }).then(() => self.clients.claim())
-  );
+  e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== VERSION).map(k => caches.delete(k)))).then(() => self.clients.claim()));
 });
+self.addEventListener('message', e => { if (e.data === 'SKIP_WAITING') self.skipWaiting(); });
 
 self.addEventListener('fetch', e => {
-  const url = new URL(e.request.url);
-
-  // Supabase Live-Anfragen vom Caching komplett ausschließen
-  if (url.hostname.includes('supabase.co')) {
-    return;
+  const req = e.request, url = new URL(req.url);
+  if (req.method !== 'GET') return;
+  if (url.hostname.endsWith('supabase.co')) return;            // Daten nie cachen
+  if (url.origin === location.origin) {                        // eigene Dateien: Netz zuerst, Cache offline
+    e.respondWith(fetch(req, { cache: 'no-cache' }).then(res => {
+      if (res.ok) { const copy = res.clone(); caches.open(VERSION).then(c => c.put(req, copy)); }
+      return res;
+    }).catch(() => caches.match(req).then(r => r || (req.mode === 'navigate' ? caches.match('index.html') : Response.error()))));
+  } else if (req.url.startsWith(CDN)) {                        // feste, versionierte Bibliothek: Cache zuerst
+    e.respondWith(caches.match(req).then(r => r || fetch(req).then(res => {
+      if (res.ok) { const copy = res.clone(); caches.open(VERSION).then(c => c.put(req, copy)); }
+      return res;
+    })));
   }
-
-  e.respondWith(
-    caches.match(e.request).then(cachedResponse => {
-      return cachedResponse || fetch(e.request);
-    })
-  );
 });
 
 self.addEventListener('push', e => {
-  const data = e.data ? e.data.json() : { title: 'Familienplaner', body: 'Neues Update!' };
-  const options = {
-    body: data.body,
-    icon: 'icon-192.png',
-    badge: 'icon-192.png'
-  };
-  e.waitUntil(
-    self.registration.showNotification(data.title, options)
-  );
+  let d = { title: 'Familienplaner', body: 'Neues Update!' };
+  try { if (e.data) d = e.data.json(); } catch (_) {}
+  e.waitUntil(self.registration.showNotification(d.title, { body: d.body, icon: 'icon-192.png', badge: 'icon-192.png' }));
+});
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  e.waitUntil(clients.matchAll({ type: 'window' }).then(l => l.length ? l[0].focus() : clients.openWindow('./')));
 });

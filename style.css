@@ -1,0 +1,70 @@
+:root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --border: #e2e8f0;
+            --josefb: #ef4444;
+            --heidi: #ec4899;
+            --josefr: #10b981;
+            --markus: #f59e0b;
+            --alle: #6366f1;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: var(--bg); color: var(--text); padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .container { width: 100%; max-width: 1200px; display: grid; grid-template-columns: 1fr; gap: 20px; }
+        @media (min-width: 768px) { .container { grid-template-columns: 2fr 1fr; } .full-width { grid-column: span 2; } }
+        .card { background: var(--card-bg); border: 1px solid var(--border); padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05); }
+        h3, h4 { margin-bottom: 15px; color: #0f172a; border-bottom: 2px solid var(--border); padding-bottom: 5px; }
+        .form-group { margin-bottom: 15px; display: flex; flex-direction: column; gap: 5px; }
+        label { font-weight: 600; font-size: 0.9rem; }
+        input, select { padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 1rem; width: 100%; }
+        .time-row { display: flex; gap: 10px; align-items: center; }
+        .time-select { width: 80px; }
+        .minute-buttons { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px; }
+        .minute-btn { padding: 6px 12px; border: 1px solid var(--border); background: #f1f5f9; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 500; transition: all 0.2s; }
+        .minute-btn:hover { background: #e2e8f0; }
+        .minute-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .btn { padding: 10px 16px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; text-align: center; font-size: 1rem; transition: background 0.2s; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-hover); }
+        .btn-danger { background: #ef4444; color: white; padding: 4px 8px; font-size: 0.8rem; }
+        .calendar-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: #f1f5f9; padding: 10px; border-radius: 8px; }
+        .view-switch { display: flex; gap: 5px; }
+        .nav-buttons { display: flex; gap: 5px; }
+        .view-btn, .nav-btn { padding: 6px 12px; border: 1px solid var(--border); background: white; border-radius: 6px; cursor: pointer; font-weight: 500; }
+        .view-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .calendar-grid { display: grid; gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+        .grid-header { display: grid; grid-template-columns: repeat(7, 1fr); background: #f1f5f9; text-align: center; font-weight: 600; padding: 8px 0; font-size: 0.9rem; }
+        .grid-body { display: grid; grid-template-columns: repeat(7, 1fr); background: var(--border); }
+        .calendar-day { background: white; min-height: 90px; padding: 5px; display: flex; flex-direction: column; gap: 4px; cursor: pointer; transition: background 0.1s; position: relative; }
+        .calendar-day:hover { background: #f8fafc; }
+        .calendar-day.other-month { background: #f1f5f9; color: #94a3b8; }
+        .calendar-day.today { background: #eff6ff; box-shadow: inset 0 0 0 2px var(--primary); }
+        .calendar-day.selected { background: #f0fdf4; box-shadow: inset 0 0 0 2px #22c55e; }
+        .day-number { font-weight: 600; font-size: 0.85rem; margin-bottom: 2px; }
+        .appointment-badge { padding: 2px 6px; border-radius: 4px; color: white; font-size: 0.75rem; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
+        .appointment-badge.josefb { background-color: var(--josefb); }
+        .appointment-badge.heidi { background-color: var(--heidi); }
+        .appointment-badge.josefr { background-color: var(--josefr); }
+        .appointment-badge.markus { background-color: var(--markus); }
+        .appointment-badge.alle { background-color: var(--alle); }
+        .shopping-badge { background: #64748b !important; border-left: 4px solid var(--primary); font-style: italic; animation: pulse 2s infinite alternate; }
+        .shopping-badge.josefb { border-left-color: var(--josefb); }
+        .shopping-badge.heidi { border-left-color: var(--heidi); }
+        .shopping-badge.josefr { border-left-color: var(--josefr); }
+        .shopping-badge.markus { border-left-color: var(--markus); }
+        .shopping-badge.alle { border-left-color: var(--alle); }
+        .shopping-list-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.95rem; }
+        .shopping-list-table th, .shopping-list-table td { border: 1px solid var(--border); padding: 8px; text-align: left; }
+        .shopping-list-table th { background: #f1f5f9; font-weight: 600; }
+        .person-dot { inline-size: 8px; block-size: 8px; display: inline-block; border-radius: 50%; margin-right: 6px; }
+        .highlighted-row { animation: highlight-flash 2.5s ease-out; }
+        @keyframes highlight-flash { 0% { background-color: #fef08a; } 100% { background-color: transparent; } }
+.hidden,[hidden]{display:none!important}
+#banner{position:fixed;left:0;right:0;bottom:0;background:#1e293b;color:#fff;padding:12px 16px;display:flex;gap:12px;align-items:center;justify-content:center;z-index:9;padding-bottom:calc(12px + env(safe-area-inset-bottom))}
+.topbar{display:flex;justify-content:space-between;align-items:center;font-size:.85rem;color:#64748b;grid-column:1/-1}
+#login-card{max-width:380px;margin:40px auto;width:100%}
+.err{color:#b91c1c;font-size:.9rem}
+body{padding-top:calc(20px + env(safe-area-inset-top))}
